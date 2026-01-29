@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sistema de Gestão de Enfermos - Pastoral da Saúde da Igreja São Bento">
+    <title>Pastoral da Saúde - Igreja São Bento</title>
+    <link rel="stylesheet" href="src/styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header__left">
+            <h1 class="header__title">Pastoral da Saúde</h1>
+            <p class="header__subtitle">Igreja São Bento</p>
+        </div>
+        <div class="header__right">
+            <button id="btn-logout" class="btn btn--header hidden">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+                <span id="btn-logout-text">Sair</span>
+            </button>
+            <button id="btn-pendencias" class="btn btn--header hidden">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Pendências
+            </button>
+            <button id="btn-gerenciar-admins" class="btn btn--header hidden">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Admins
+            </button>
+            <button id="btn-admin" class="btn btn--icon-bg" title="Administração" aria-label="Administração">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <section class="setores" id="lista-setores">
+            <p class="loading">Carregando setores...</p>
+        </section>
+    </main>
+
+    <!-- Modal: Detalhes do Setor -->
+    <div class="modal" id="modal-setor">
+        <div class="modal__overlay" data-close-modal></div>
+        <div class="modal__content modal__content--flex">
+            <div class="modal__header--sticky">
+                <button class="modal__close" data-close-modal aria-label="Fechar">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <h2 class="modal__title" id="setor-nome">Nome do Setor</h2>
+                <p class="modal__info" id="setor-horario">Horário</p>
+            </div>
+            <div class="modal__body">
+                <div class="modal__section modal__section-card">
+                    <h3 class="modal__section-title">Responsáveis</h3>
+                    <ul class="lista-responsaveis" id="setor-responsaveis"></ul>
+                </div>
+                <div class="modal__section modal__section-card">
+                    <h3 class="modal__section-title">Enfermos</h3>
+                    <ul class="lista-enfermos" id="setor-enfermos"></ul>
+                </div>
+                <button id="btn-add-enfermo" class="btn btn--primary hidden">+ Adicionar Enfermo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Login Responsável -->
+    <div class="modal" id="modal-login">
+        <div class="modal__overlay" data-close-modal></div>
+        <div class="modal__content modal__content--small">
+            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
+            <h2 class="modal__title">Identificação</h2>
+            <p class="modal__subtitle">Para editar ou remover enfermos</p>
+            <form id="form-login" class="form">
+                <div class="form__group">
+                    <label for="login-nome" class="form__label">Seu nome</label>
+                    <input type="text" id="login-nome" class="form__input" placeholder="Ex: Maria A. Santos" required>
+                </div>
+                <div class="form__group">
+                    <label for="login-setor" class="form__label">Seu setor</label>
+                    <select id="login-setor" class="form__select" required>
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <p id="login-erro" class="form__error hidden">Nome não encontrado</p>
+                <button type="submit" class="btn btn--primary btn--full">Confirmar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Login Admin -->
+    <div class="modal" id="modal-login-admin">
+        <div class="modal__overlay" data-close-modal></div>
+        <div class="modal__content modal__content--small">
+            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
+            <h2 class="modal__title">Administração</h2>
+            <p class="modal__subtitle">Escolha como deseja entrar</p>
+
+            <button id="btn-google-login" class="btn btn--google btn--full">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"
+                        fill="#4285F4" />
+                    <path
+                        d="M9.003 18c2.43 0 4.467-.806 5.956-2.18L12.05 13.56c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.44 15.983 5.485 18 9.003 18z"
+                        fill="#34A853" />
+                    <path
+                        d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.96H.957C.347 6.175 0 7.55 0 9.002c0 1.452.348 2.827.957 4.042l3.007-2.332z"
+                        fill="#FBBC05" />
+                    <path
+                        d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.003 0 5.485 0 2.44 2.017.96 4.958L3.967 7.29c.708-2.127 2.692-3.71 5.036-3.71z"
+                        fill="#EA4335" />
+                </svg>
+                Entrar com Google
+            </button>
+
+            <div class="divider">
+                <span>ou</span>
+            </div>
+
+            <form id="form-login-admin" class="form">
+                <div class="form__group">
+                    <label for="admin-email" class="form__label">Email</label>
+                    <input type="email" id="admin-email" class="form__input" placeholder="admin@exemplo.com" required>
+                </div>
+                <div class="form__group">
+                    <label for="admin-senha" class="form__label">Senha</label>
+                    <input type="password" id="admin-senha" class="form__input" required>
+                </div>
+                <p id="admin-erro" class="form__error hidden">Email ou senha incorretos</p>
+                <button type="submit" class="btn btn--primary btn--full">Entrar com Email</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Editar Enfermo -->
+    <div class="modal" id="modal-editar">
+        <div class="modal__overlay" data-close-to-setor></div>
+        <div class="modal__content modal__content--small">
+            <button class="modal__close" data-close-to-setor aria-label="Fechar">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <h2 class="modal__title">Editar Enfermo</h2>
+            <form id="form-editar" class="form">
+                <input type="hidden" id="editar-id">
+                <input type="hidden" id="editar-setor-id">
+                <div class="form__group">
+                    <label for="editar-nome" class="form__label">Nome</label>
+                    <input type="text" id="editar-nome" class="form__input" required>
+                </div>
+                <div class="form__group">
+                    <label for="editar-endereco" class="form__label">Endereço</label>
+                    <input type="text" id="editar-endereco" class="form__input" required>
+                </div>
+                <button type="submit" class="btn btn--primary btn--full">Solicitar Alteração</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Remover Enfermo -->
+    <div class="modal" id="modal-remover">
+        <div class="modal__overlay" data-close-to-setor></div>
+        <div class="modal__content modal__content--small">
+            <button class="modal__close" data-close-to-setor aria-label="Fechar">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <h2 class="modal__title">Remover Enfermo</h2>
+            <p class="modal__text" id="remover-nome-enfermo">Nome do enfermo</p>
+            <form id="form-remover" class="form">
+                <input type="hidden" id="remover-id">
+                <input type="hidden" id="remover-setor-id">
+                <div class="form__group">
+                    <label for="remover-motivo" class="form__label">Motivo da remoção</label>
+                    <select id="remover-motivo" class="form__select" required>
+                        <option value="">Selecione...</option>
+                        <option value="Falecimento">Falecimento</option>
+                        <option value="Desistência">Desistência</option>
+                        <option value="Mudança">Mudança de endereço/cidade</option>
+                        <option value="Outro">Outro motivo</option>
+                    </select>
+                </div>
+                <div class="form__group hidden" id="remover-outro-container">
+                    <label for="remover-outro-motivo" class="form__label">Especifique o motivo</label>
+                    <input type="text" id="remover-outro-motivo" class="form__input"
+                        placeholder="Digite o motivo (mínimo 4 caracteres)">
+                </div>
+                <p id="remover-erro" class="form__error hidden">Motivo deve ter pelo menos 4 caracteres</p>
+                <button type="submit" class="btn btn--danger btn--full">Solicitar Remoção</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Adicionar Enfermo -->
+    <div class="modal" id="modal-adicionar">
+        <div class="modal__overlay" data-close-modal></div>
+        <div class="modal__content modal__content--small">
+            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
+            <h2 class="modal__title">Novo Enfermo</h2>
+            <form id="form-adicionar" class="form">
+                <input type="hidden" id="adicionar-setor-id">
+                <div class="form__group">
+                    <label for="adicionar-nome" class="form__label">Nome</label>
+                    <input type="text" id="adicionar-nome" class="form__input" required>
+                </div>
+                <div class="form__group">
+                    <label for="adicionar-endereco" class="form__label">Endereço</label>
+                    <input type="text" id="adicionar-endereco" class="form__input" required>
+                </div>
+                <button type="submit" class="btn btn--primary btn--full">Adicionar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Pendências (Admin) -->
+    <div class="modal" id="modal-pendencias">
+        <div class="modal__overlay" data-close-modal></div>
+        <div class="modal__content">
+            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
+            <h2 class="modal__title">Pendências</h2>
+            <p class="modal__subtitle">Solicitações aguardando aprovação</p>
+            <ul class="lista-pendencias" id="lista-pendencias">
+                <li class="pendencia--vazia">Nenhuma pendência no momento</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Modal: Gerenciar Administradores -->
+    <div class="modal" id="modal-gerenciar-admins">
+        <div class="modal__overlay" data-close-modal></div>
+        <div class="modal__content">
+            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
+            <h2 class="modal__title">Gerenciar Administradores</h2>
+            <p class="modal__subtitle">Adicionar ou remover administradores</p>
+
+            <!-- Formulário para adicionar admin -->
+            <form id="form-add-admin" class="form"
+                style="margin-bottom: var(--spacing-lg); padding-bottom: var(--spacing-lg); border-bottom: 1px solid var(--color-border);">
+                <h3 class="modal__section-title">Adicionar Novo Administrador</h3>
+                <div class="form__group">
+                    <label for="novo-admin-email" class="form__label">Email</label>
+                    <input type="email" id="novo-admin-email" class="form__input" placeholder="admin@exemplo.com"
+                        required>
+                </div>
+                <div class="form__group">
+                    <label for="novo-admin-senha" class="form__label">Senha</label>
+                    <input type="password" id="novo-admin-senha" class="form__input" minlength="6" required>
+                </div>
+                <p id="add-admin-erro" class="form__error hidden">Erro ao adicionar</p>
+                <button type="submit" class="btn btn--primary btn--full">+ Adicionar Administrador</button>
+            </form>
+
+            <!-- Lista de admins -->
+            <div class="modal__section">
+                <h3 class="modal__section-title">Administradores Cadastrados</h3>
+                <ul class="lista-admins" id="lista-admins">
+                    <li class="loading">Carregando...</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Responsável (Adicionar/Editar) -->
+    <div class="modal" id="modal-responsavel">
+        <div class="modal__overlay" data-close-modal></div>
+        <div class="modal__content modal__content--small">
+            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
+            <h2 class="modal__title" id="modal-responsavel-titulo">Adicionar Responsável</h2>
+            <form id="form-responsavel" class="form">
+                <input type="hidden" id="responsavel-nome-antigo">
+                <div class="form__group">
+                    <label for="responsavel-nome" class="form__label">Nome do Responsável</label>
+                    <input type="text" id="responsavel-nome" class="form__input" placeholder="Ex: Maria A. Santos"
+                        required>
+                </div>
+                <p id="responsavel-erro" class="form__error hidden">Erro</p>
+                <button type="submit" class="btn btn--primary btn--full" id="btn-salvar-responsavel">Adicionar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast hidden" id="toast">
+        <span id="toast-message"></span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="src/scripts/firebase-config.js"></script>
+    <script src="src/scripts/db.js"></script>
+    <script src="src/scripts/auth.js"></script>
+    <script src="src/scripts/app.js"></script>
+</body>
+
+</html>
