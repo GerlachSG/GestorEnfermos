@@ -642,9 +642,10 @@ input[type="password"],
     flex: 1;
 }
 
-.enfermo-item__nome {
-    font-weight: 500;
-    color: var(--color-text);
+.enfermo-item__idade {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+    font-weight: 600;
     margin-bottom: 4px;
 }
 

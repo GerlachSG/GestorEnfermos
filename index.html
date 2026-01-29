@@ -105,15 +105,15 @@
             <form id="form-login" class="form">
                 <div class="form__group">
                     <label for="login-nome" class="form__label">Seu nome</label>
-                    <input type="text" id="login-nome" class="form__input" placeholder="Ex: Maria A. Santos" required>
+                    <input type="text" id="login-nome" class="form__input input-uppercase"
+                        placeholder="EX: MARIA A. SANTOS" required>
                 </div>
                 <div class="form__group">
-                    <label for="login-setor" class="form__label">Seu setor</label>
-                    <select id="login-setor" class="form__select" required>
-                        <option value="">Selecione...</option>
-                    </select>
+                    <label for="login-telefone" class="form__label">Seu celular</label>
+                    <input type="tel" id="login-telefone" class="form__input input-phone" placeholder="99999-9999"
+                        maxlength="10" required>
                 </div>
-                <p id="login-erro" class="form__error hidden">Nome não encontrado</p>
+                <p id="login-erro" class="form__error hidden">Nome ou telefone incorretos</p>
                 <button type="submit" class="btn btn--primary btn--full">Confirmar</button>
             </form>
         </div>
@@ -181,11 +181,15 @@
                 <input type="hidden" id="editar-setor-id">
                 <div class="form__group">
                     <label for="editar-nome" class="form__label">Nome</label>
-                    <input type="text" id="editar-nome" class="form__input" required>
+                    <input type="text" id="editar-nome" class="form__input input-uppercase" required>
                 </div>
                 <div class="form__group">
                     <label for="editar-endereco" class="form__label">Endereço</label>
-                    <input type="text" id="editar-endereco" class="form__input" required>
+                    <input type="text" id="editar-endereco" class="form__input input-uppercase" required>
+                </div>
+                <div class="form__group">
+                    <label for="editar-idade" class="form__label">Idade</label>
+                    <input type="number" id="editar-idade" class="form__input" placeholder="EX: 75" required>
                 </div>
                 <button type="submit" class="btn btn--primary btn--full">Solicitar Alteração</button>
             </form>
@@ -220,7 +224,7 @@
                 </div>
                 <div class="form__group hidden" id="remover-outro-container">
                     <label for="remover-outro-motivo" class="form__label">Especifique o motivo</label>
-                    <input type="text" id="remover-outro-motivo" class="form__input"
+                    <input type="text" id="remover-outro-motivo" class="form__input input-uppercase"
                         placeholder="Digite o motivo (mínimo 4 caracteres)">
                 </div>
                 <p id="remover-erro" class="form__error hidden">Motivo deve ter pelo menos 4 caracteres</p>
@@ -239,11 +243,15 @@
                 <input type="hidden" id="adicionar-setor-id">
                 <div class="form__group">
                     <label for="adicionar-nome" class="form__label">Nome</label>
-                    <input type="text" id="adicionar-nome" class="form__input" required>
+                    <input type="text" id="adicionar-nome" class="form__input input-uppercase" required>
                 </div>
                 <div class="form__group">
                     <label for="adicionar-endereco" class="form__label">Endereço</label>
-                    <input type="text" id="adicionar-endereco" class="form__input" required>
+                    <input type="text" id="adicionar-endereco" class="form__input input-uppercase" required>
+                </div>
+                <div class="form__group">
+                    <label for="adicionar-idade" class="form__label">Idade</label>
+                    <input type="number" id="adicionar-idade" class="form__input" placeholder="EX: 75" required>
                 </div>
                 <button type="submit" class="btn btn--primary btn--full">Adicionar</button>
             </form>
@@ -275,6 +283,11 @@
             <form id="form-add-admin" class="form"
                 style="margin-bottom: var(--spacing-lg); padding-bottom: var(--spacing-lg); border-bottom: 1px solid var(--color-border);">
                 <h3 class="modal__section-title">Adicionar Novo Administrador</h3>
+                <div class="form__group">
+                    <label for="novo-admin-nome" class="form__label">Nome Completo</label>
+                    <input type="text" id="novo-admin-nome" class="form__input input-uppercase"
+                        placeholder="EX: IGOR COSTA GERLACH" required>
+                </div>
                 <div class="form__group">
                     <label for="novo-admin-email" class="form__label">Email</label>
                     <input type="email" id="novo-admin-email" class="form__input" placeholder="admin@exemplo.com"
@@ -308,8 +321,13 @@
                 <input type="hidden" id="responsavel-nome-antigo">
                 <div class="form__group">
                     <label for="responsavel-nome" class="form__label">Nome do Responsável</label>
-                    <input type="text" id="responsavel-nome" class="form__input" placeholder="Ex: Maria A. Santos"
-                        required>
+                    <input type="text" id="responsavel-nome" class="form__input input-uppercase"
+                        placeholder="EX: MARIA A. SANTOS" required>
+                </div>
+                <div class="form__group">
+                    <label for="responsavel-telefone" class="form__label">Celular</label>
+                    <input type="tel" id="responsavel-telefone" class="form__input input-phone" placeholder="99999-9999"
+                        maxlength="10" required>
                 </div>
                 <p id="responsavel-erro" class="form__error hidden">Erro</p>
                 <button type="submit" class="btn btn--primary btn--full" id="btn-salvar-responsavel">Adicionar</button>

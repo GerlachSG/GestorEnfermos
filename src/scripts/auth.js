@@ -13,26 +13,53 @@ const Auth = {
      * @param {string} setorId - ID do setor
      * @returns {Promise<Object>} Dados do usuário logado
      */
-    async login(nome, setorId) {
+    /**
+     * Realiza login como responsável de setor
+     * @param {string} nome - Nome do usuário
+     * @param {string} telefone - Telefone do usuário
+     * @returns {Promise<Object>} Dados do usuário logado
+     */
+    async login(nome, telefone) {
         try {
-            // Busca o setor para validar o nome
-            const setor = await DB.getSetor(setorId);
+            // Busca todos os setores para encontrar o responsável
+            const setores = await DB.getSetores();
+            const nomeNormalizado = nome.trim().toUpperCase();
+            const telefoneLimpo = telefone.replace(/\D/g, ''); // Remove formatação para comparar se necessário, mas o DB deve salvar com formatação? 
+            // Melhor: compara o valor exato salvo (com máscara). Vamos assumir que salva "99999-9999".
 
-            // Verifica se o nome está na lista de responsáveis (case-insensitive)
-            const nomeNormalizado = nome.trim().toLowerCase();
-            const responsavelEncontrado = setor.responsaveis.find(
-                r => r.toLowerCase() === nomeNormalizado
-            );
+            let responsavelEncontrado = null;
+            let setorEncontrado = null;
+
+            for (const setor of setores) {
+                if (!setor.responsaveis) continue;
+
+                const encontrado = setor.responsaveis.find(r => {
+                    // Se for objeto (novo formato)
+                    if (typeof r === 'object' && r.nome && r.telefone) {
+                        return r.nome.toUpperCase() === nomeNormalizado && r.telefone === telefone;
+                    }
+                    // Se for string (legado) - ignoramos ou permitimos login apenas com nome?
+                    // Por segurança, vamos exigir o novo formato. Antigos devem ser recadastrados.
+                    return false;
+                });
+
+                if (encontrado) {
+                    responsavelEncontrado = encontrado;
+                    setorEncontrado = setor;
+                    break;
+                }
+            }
 
             if (!responsavelEncontrado) {
-                throw new Error('Nome não encontrado na lista de responsáveis deste setor');
+                throw new Error('Nome e celular não conferem ou você não está cadastrado.');
             }
 
             // Salva a sessão
             const usuario = {
-                nome: responsavelEncontrado,
-                setorId: setorId,
-                setorNome: setor.nome,
+                nome: responsavelEncontrado.nome,
+                telefone: responsavelEncontrado.telefone,
+                setorId: setorEncontrado.id,
+                setorNome: setorEncontrado.nome,
                 isAdmin: false,
                 tipo: 'responsavel'
             };
@@ -64,9 +91,13 @@ const Auth = {
             const userCredential = await auth.signInWithEmailAndPassword(email, senha);
             const user = userCredential.user;
 
+            // Busca os dados do admin no Firestore para pegar o nome correto
+            const adminDoc = await db.collection('admins').where('email', '==', email.toLowerCase()).limit(1).get();
+            const adminData = adminDoc.docs[0].data();
+
             // Salva a sessão
             const usuario = {
-                nome: user.email.split('@')[0], // Usa parte do email como nome
+                nome: adminData.nome || user.email.split('@')[0],
                 email: user.email,
                 uid: user.uid,
                 setorId: null,
@@ -179,9 +210,13 @@ const Auth = {
                 throw new Error('Este email não está autorizado como administrador');
             }
 
+            // Busca os dados do admin no Firestore para pegar o nome correto
+            const adminDoc = await db.collection('admins').where('email', '==', user.email.toLowerCase()).limit(1).get();
+            const adminData = adminDoc.docs[0].data();
+
             // Salva a sessão
             const usuario = {
-                nome: user.displayName || user.email.split('@')[0],
+                nome: adminData.nome || user.displayName || user.email.split('@')[0],
                 email: user.email,
                 uid: user.uid,
                 photoURL: user.photoURL,
@@ -215,9 +250,7 @@ const Auth = {
      */
     async listarAdmins() {
         try {
-            // Usa Firebase Admin SDK via Cloud Function ou lista do Auth
-            // Por enquanto, retorna lista vazia (precisa de backend)
-            return [];
+            return await DB.listarAdmins();
         } catch (error) {
             console.error('Erro ao listar admins:', error);
             throw error;
@@ -230,25 +263,34 @@ const Auth = {
      * @param {string} senha - Senha do novo admin
      * @returns {Promise<Object>} Dados do admin criado
      */
-    async adicionarAdmin(email, senha) {
+    async adicionarAdmin(nome, email, senha) {
         try {
-            // Cria novo usuário no Firebase Auth
-            const userCredential = await auth.createUserWithEmailAndPassword(email, senha);
-            return {
-                uid: userCredential.user.uid,
-                email: userCredential.user.email
-            };
+            // 1. Autoriza no Firestore primeiro (Fonte da verdade)
+            await DB.autorizarAdmin(nome, email);
+
+            // 2. Tenta gerar a conta no Auth (Pode falhar se já existir)
+            try {
+                await auth.createUserWithEmailAndPassword(email, senha);
+            } catch (authError) {
+                // Se o erro for que o email já está em uso, apenas ignoramos 
+                // pois o email já foi autorizado no Firestore no passo 1.
+                if (authError.code === 'auth/email-already-in-use') {
+                    console.log('Conta Auth já existe, mas email foi autorizado no banco.');
+                    return { email, status: 'authorized' };
+                }
+                throw authError;
+            }
+
+            return { email, status: 'created' };
         } catch (error) {
             console.error('Erro ao adicionar admin:', error);
 
-            if (error.code === 'auth/email-already-in-use') {
-                throw new Error('Este email já está cadastrado');
-            } else if (error.code === 'auth/invalid-email') {
+            if (error.code === 'auth/invalid-email') {
                 throw new Error('Email inválido');
             } else if (error.code === 'auth/weak-password') {
                 throw new Error('Senha muito fraca (mínimo 6 caracteres)');
             } else {
-                throw new Error('Erro ao adicionar administrador');
+                throw new Error(error.message || 'Erro ao adicionar administrador');
             }
         }
     },

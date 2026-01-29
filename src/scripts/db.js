@@ -97,6 +97,7 @@ const DB = {
                 .add({
                     nome: dados.nome,
                     endereco: dados.endereco,
+                    idade: dados.idade,
                     status: 'ativo',
                     dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -149,7 +150,8 @@ const DB = {
                     status: 'pendente_edicao',
                     edicaoPendente: {
                         nome: novosDados.nome,
-                        endereco: novosDados.endereco
+                        endereco: novosDados.endereco,
+                        idade: novosDados.idade
                     },
                     dataPendencia: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -220,6 +222,7 @@ const DB = {
                 await enfermoRef.update({
                     nome: dados.edicaoPendente.nome,
                     endereco: dados.edicaoPendente.endereco,
+                    idade: dados.edicaoPendente.idade,
                     status: 'ativo',
                     edicaoPendente: firebase.firestore.FieldValue.delete(),
                     dataPendencia: firebase.firestore.FieldValue.delete()
@@ -275,6 +278,55 @@ const DB = {
     },
 
     /**
+     * Autoriza um email como administrador no Firestore
+     * @param {string} nome - Nome do administrador
+     * @param {string} email - Email a autorizar
+     */
+    async autorizarAdmin(nome, email) {
+        try {
+            const emailLower = email.toLowerCase();
+            // Verifica se já existe para evitar duplicatas
+            const snapshot = await db.collection('admins')
+                .where('email', '==', emailLower)
+                .get();
+
+            if (snapshot.empty) {
+                await db.collection('admins').add({
+                    nome: nome.toUpperCase(),
+                    email: emailLower,
+                    dataAutorizacao: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } else {
+                // Se já existe, apenas atualiza o nome se necessário
+                const docId = snapshot.docs[0].id;
+                await db.collection('admins').doc(docId).update({
+                    nome: nome.toUpperCase()
+                });
+            }
+        } catch (error) {
+            console.error('Erro ao autorizar admin:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Lista todos os administradores autorizados no Firestore
+     * @returns {Promise<Array>}
+     */
+    async listarAdmins() {
+        try {
+            const snapshot = await db.collection('admins').orderBy('nome').get();
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+        } catch (error) {
+            console.error('Erro ao listar admins do Firestore:', error);
+            throw error;
+        }
+    },
+
+    /**
      * Edita um enfermo diretamente (para admins)
      * @param {string} setorId - ID do setor
      * @param {string} enfermoId - ID do enfermo
@@ -289,7 +341,8 @@ const DB = {
                 .doc(enfermoId)
                 .update({
                     nome: dados.nome,
-                    endereco: dados.endereco
+                    endereco: dados.endereco,
+                    idade: dados.idade
                 });
         } catch (error) {
             console.error('Erro ao editar enfermo:', error);
@@ -319,15 +372,15 @@ const DB = {
     /**
      * Adiciona um responsável ao setor
      * @param {string} setorId - ID do setor
-     * @param {string} nome - Nome do responsável
+     * @param {Object} responsavel - { nome, telefone }
      */
-    async addResponsavel(setorId, nome) {
+    async addResponsavel(setorId, responsavel) {
         try {
             await db
                 .collection('setores')
                 .doc(setorId)
                 .update({
-                    responsaveis: firebase.firestore.FieldValue.arrayUnion(nome)
+                    responsaveis: firebase.firestore.FieldValue.arrayUnion(responsavel)
                 });
         } catch (error) {
             console.error('Erro ao adicionar responsável:', error);
@@ -338,15 +391,16 @@ const DB = {
     /**
      * Remove um responsável do setor
      * @param {string} setorId - ID do setor
-     * @param {string} nome - Nome do responsável
+     * @param {Object} responsavel - Objeto do responsável a remover
      */
-    async removeResponsavel(setorId, nome) {
+    async removeResponsavel(setorId, responsavel) {
         try {
+            // Usa arrayRemove para remover o objeto exato
             await db
                 .collection('setores')
                 .doc(setorId)
                 .update({
-                    responsaveis: firebase.firestore.FieldValue.arrayRemove(nome)
+                    responsaveis: firebase.firestore.FieldValue.arrayRemove(responsavel)
                 });
         } catch (error) {
             console.error('Erro ao remover responsável:', error);
@@ -355,21 +409,30 @@ const DB = {
     },
 
     /**
-     * Edita o nome de um responsável do setor
+     * Edita um responsável do setor
      * @param {string} setorId - ID do setor
-     * @param {string} nomeAntigo - Nome atual do responsável
-     * @param {string} nomeNovo - Novo nome
+     * @param {Object} responsavelAntigo - Objeto atual { nome, telefone }
+     * @param {Object} responsavelNovo - Novo objeto { nome, telefone }
      */
-    async editarResponsavel(setorId, nomeAntigo, nomeNovo) {
+    async editarResponsavel(setorId, responsavelAntigo, responsavelNovo) {
         try {
             // Busca o setor atual
             const doc = await db.collection('setores').doc(setorId).get();
             const setor = doc.data();
 
             // Atualiza o array de responsáveis
-            const novosResponsaveis = setor.responsaveis.map(r =>
-                r === nomeAntigo ? nomeNovo : r
-            );
+            // Lida com compatibilidade: se for string, compara string
+            const novosResponsaveis = setor.responsaveis.map(r => {
+                // Se r for string (legado)
+                if (typeof r === 'string') {
+                    return r === responsavelAntigo.nome ? responsavelNovo : r;
+                }
+                // Se r for objeto
+                if (r.nome === responsavelAntigo.nome && r.telefone === responsavelAntigo.telefone) {
+                    return responsavelNovo;
+                }
+                return r;
+            });
 
             await db
                 .collection('setores')

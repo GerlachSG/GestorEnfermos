@@ -9,17 +9,18 @@
  * @param {string} nomeCompleto - Nome completo
  * @returns {string} Nome formatado
  */
-function formatarNomeExibicao(nomeCompleto) {
-    if (!nomeCompleto) return '';
+function formatarNomeExibicao(responsavel) {
+    if (!responsavel) return '';
+
+    // Se for objeto, usa a propriedade nome
+    const nomeCompleto = typeof responsavel === 'object' ? responsavel.nome : responsavel;
 
     const partes = nomeCompleto.trim().split(/\s+/);
 
     if (partes.length <= 2) {
-        // Só tem primeiro e último nome, retorna como está
         return partes.join(' ');
     }
 
-    // Primeiro nome + sobrenomes do meio abreviados + último nome
     const primeiro = partes[0];
     const ultimo = partes[partes.length - 1];
     const meios = partes.slice(1, -1).map(nome => nome.charAt(0).toUpperCase() + '.');
@@ -31,6 +32,7 @@ function formatarNomeExibicao(nomeCompleto) {
 const App = {
     setorAtual: null,
     setores: [],
+    modalStack: [],
 
     /**
      * Inicializa a aplicação
@@ -53,7 +55,7 @@ const App = {
 
         // Fechar modais
         document.querySelectorAll('[data-close-modal]').forEach(el => {
-            el.addEventListener('click', () => this.fecharTodosModais());
+            el.addEventListener('click', () => this.fecharUltimoModal());
         });
 
         // Fechar modais voltando para o setor
@@ -63,7 +65,7 @@ const App = {
 
         // ESC para fechar modais
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') this.fecharTodosModais();
+            if (e.key === 'Escape') this.fecharUltimoModal();
         });
 
         // Formulário de login responsável
@@ -104,6 +106,23 @@ const App = {
 
         // Formulário de responsável
         document.getElementById('form-responsavel').addEventListener('submit', (e) => this.handleSalvarResponsavel(e));
+
+        // Input Mask e Uppercase
+        document.querySelectorAll('.input-uppercase').forEach(input => {
+            input.addEventListener('input', (e) => {
+                e.target.value = e.target.value.toUpperCase();
+            });
+        });
+
+        document.querySelectorAll('.input-phone').forEach(input => {
+            input.addEventListener('input', (e) => {
+                let v = e.target.value.replace(/\D/g, '');
+                if (v.length > 5) {
+                    v = v.substring(0, 5) + '-' + v.substring(5, 9);
+                }
+                e.target.value = v;
+            });
+        });
     },
 
     /**
@@ -179,22 +198,10 @@ const App = {
                 });
             });
 
-            // Atualiza select de setores no login
-            this.atualizarSelectSetores();
-
         } catch (error) {
             container.innerHTML = '<p class="loading">Erro ao carregar setores. Verifique a conexão.</p>';
             console.error(error);
         }
-    },
-
-    /**
-     * Atualiza o select de setores no modal de login
-     */
-    atualizarSelectSetores() {
-        const select = document.getElementById('login-setor');
-        select.innerHTML = '<option value="">Selecione...</option>' +
-            this.setores.map(s => `<option value="${s.id}">${s.nome}</option>`).join('');
     },
 
     /**
@@ -219,11 +226,17 @@ const App = {
             const iconAdd = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
 
             let responsaveisHtml = setor.responsaveis.map(r => {
-                const nomeExibicao = formatarNomeExibicao(r);
+                const isObj = typeof r === 'object';
+                const nome = isObj ? r.nome : r;
+                // O número só deve ser visível para Admins
+                const telefone = (isObj && isAdmin) ? r.telefone : '';
+                const nomeExibicao = formatarNomeExibicao(nome);
+                const display = `${nomeExibicao} ${telefone ? '<small style="color:var(--color-text-muted); font-weight:normal">(' + telefone + ')</small>' : ''}`;
+
                 if (isAdmin) {
-                    return `<li class="responsavel-item" data-responsavel="${r}" title="Clique para editar">${nomeExibicao}<button class="responsavel-remove" data-remove-responsavel="${r}" title="Remover">${iconRemoveSmall}</button></li>`;
+                    return `<li class="responsavel-item" data-responsavel="${nome}" data-telefone="${telefone || ''}" title="Clique para editar">${display}<button class="responsavel-remove" data-remove-nome="${nome}" data-remove-telefone="${telefone || ''}" title="Remover">${iconRemoveSmall}</button></li>`;
                 }
-                return `<li>${nomeExibicao}</li>`;
+                return `<li>${display}</li>`;
             }).join('');
 
             // Adiciona botão de + se for admin
@@ -237,18 +250,20 @@ const App = {
             if (isAdmin) {
                 listaResponsaveis.querySelectorAll('.responsavel-item').forEach(item => {
                     item.addEventListener('click', (e) => {
-                        if (!e.target.classList.contains('responsavel-remove')) {
+                        if (!e.target.closest('.responsavel-remove')) {
                             const nome = item.dataset.responsavel;
-                            this.abrirEditarResponsavel(nome);
+                            const telefone = item.dataset.telefone;
+                            this.abrirEditarResponsavel(nome, telefone);
                         }
                     });
                 });
 
-                listaResponsaveis.querySelectorAll('[data-remove-responsavel]').forEach(btn => {
+                listaResponsaveis.querySelectorAll('.responsavel-remove').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         e.stopPropagation();
-                        const nome = btn.dataset.removeResponsavel;
-                        this.confirmarRemoverResponsavel(nome);
+                        const nome = btn.dataset.removeNome;
+                        const telefone = btn.dataset.removeTelefone;
+                        this.confirmarRemoverResponsavel(nome, telefone);
                     });
                 });
 
@@ -283,6 +298,7 @@ const App = {
                         <li class="enfermo-item ${isPendente ? 'enfermo-item--pendente' : ''}">
                             <div class="enfermo-item__info">
                                 <div class="enfermo-item__nome">${e.nome}</div>
+                                <div class="enfermo-item__idade">${e.idade} ANOS</div>
                                 <div class="enfermo-item__endereco">${e.endereco}</div>
                                 ${statusTexto ? `<div class="enfermo-item__status">${statusTexto}</div>` : ''}
                             </div>
@@ -365,6 +381,7 @@ const App = {
         document.getElementById('editar-setor-id').value = this.setorAtual;
         document.getElementById('editar-nome').value = enfermo.nome;
         document.getElementById('editar-endereco').value = enfermo.endereco;
+        document.getElementById('editar-idade').value = enfermo.idade || '';
 
         this.abrirModal('modal-editar');
     },
@@ -423,7 +440,7 @@ const App = {
                 const tipo = p.status === 'pendente_remocao' ? 'Remoção' : 'Edição';
                 const detalhe = p.status === 'pendente_remocao'
                     ? `Motivo: ${p.motivoPendencia}`
-                    : `Novo: ${p.edicaoPendente.nome} - ${p.edicaoPendente.endereco}`;
+                    : `Novo: ${p.edicaoPendente.nome} - ${p.edicaoPendente.idade} ANOS - ${p.edicaoPendente.endereco}`;
 
                 return `
                     <li class="pendencia-item">
@@ -473,19 +490,13 @@ const App = {
         e.preventDefault();
 
         const nome = document.getElementById('login-nome').value.toUpperCase();
-        const setorId = document.getElementById('login-setor').value;
+        const telefone = document.getElementById('login-telefone').value;
         const erroEl = document.getElementById('login-erro');
 
         erroEl.classList.add('hidden');
 
         try {
-            if (!setorId) {
-                erroEl.textContent = 'Selecione um setor';
-                erroEl.classList.remove('hidden');
-                return;
-            }
-
-            await Auth.login(nome, setorId);
+            await Auth.login(nome, telefone);
             this.mostrarToast('Identificação confirmada!');
 
             this.atualizarUI();
@@ -497,7 +508,7 @@ const App = {
             }
 
         } catch (error) {
-            erroEl.textContent = error.message || 'Nome não encontrado';
+            erroEl.textContent = error.message;
             erroEl.classList.remove('hidden');
         }
     },
@@ -536,9 +547,10 @@ const App = {
         const setorId = document.getElementById('adicionar-setor-id').value;
         const nome = document.getElementById('adicionar-nome').value.toUpperCase();
         const endereco = document.getElementById('adicionar-endereco').value.toUpperCase();
+        const idade = document.getElementById('adicionar-idade').value;
 
         try {
-            await DB.addEnfermo(setorId, { nome, endereco });
+            await DB.addEnfermo(setorId, { nome, endereco, idade });
             this.mostrarToast('Enfermo adicionado com sucesso!');
             this.fecharModal('modal-adicionar');
             await this.abrirSetor(setorId);
@@ -559,14 +571,15 @@ const App = {
         const setorId = document.getElementById('editar-setor-id').value;
         const nome = document.getElementById('editar-nome').value.toUpperCase();
         const endereco = document.getElementById('editar-endereco').value.toUpperCase();
+        const idade = document.getElementById('editar-idade').value;
 
         try {
             // Se for admin, edita diretamente
             if (Auth.isAdmin()) {
-                await DB.editarEnfermoDireto(setorId, enfermoId, { nome, endereco });
+                await DB.editarEnfermoDireto(setorId, enfermoId, { nome, endereco, idade });
                 this.mostrarToast('Enfermo atualizado com sucesso!');
             } else {
-                await DB.solicitarEdicao(setorId, enfermoId, { nome, endereco });
+                await DB.solicitarEdicao(setorId, enfermoId, { nome, endereco, idade });
                 this.mostrarToast('Edição solicitada. Aguardando aprovação.');
             }
             this.fecharModal('modal-editar');
@@ -675,14 +688,36 @@ const App = {
      * Abre um modal
      */
     abrirModal(modalId) {
-        document.getElementById(modalId).classList.add('active');
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.add('active');
+            // Adiciona à pilha se não for o último
+            if (this.modalStack[this.modalStack.length - 1] !== modalId) {
+                this.modalStack.push(modalId);
+            }
+        }
     },
 
     /**
      * Fecha um modal específico
      */
     fecharModal(modalId) {
-        document.getElementById(modalId).classList.remove('active');
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.classList.remove('active');
+            // Remove da pilha
+            this.modalStack = this.modalStack.filter(id => id !== modalId);
+        }
+    },
+
+    /**
+     * Fecha o último modal aberto (pilha)
+     */
+    fecharUltimoModal() {
+        if (this.modalStack.length > 0) {
+            const modalId = this.modalStack.pop();
+            document.getElementById(modalId).classList.remove('active');
+        }
     },
 
     /**
@@ -692,18 +727,17 @@ const App = {
         document.querySelectorAll('.modal').forEach(modal => {
             modal.classList.remove('active');
         });
+        this.modalStack = [];
     },
 
     /**
      * Fecha modal atual e volta para o setor
      */
     fecharModalVoltarSetor() {
-        // Fecha modais de editar e remover
-        this.fecharModal('modal-editar');
-        this.fecharModal('modal-remover');
+        this.fecharUltimoModal();
 
-        // Reabre o setor se houver um setor atual
-        if (this.setorAtual) {
+        // Se após fechar o último não houver nada na pilha, mas temos um setor atual, reabre o setor
+        if (this.modalStack.length === 0 && this.setorAtual) {
             this.abrirSetor(this.setorAtual);
         }
     },
@@ -755,24 +789,33 @@ const App = {
         this.abrirModal('modal-gerenciar-admins');
 
         try {
-            // Mostra o admin atual logado
-            const usuario = Auth.getUsuario();
+            // Busca a lista real de admins autorizados no Firestore
+            const admins = await Auth.listarAdmins();
+            const usuarioAtual = Auth.getUsuario();
+
             const iconUser = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
 
-            lista.innerHTML = `
-                <li class="admin-item">
-                    <div class="admin-item__email">
-                        ${iconUser}
-                        <span style="margin-left: 8px;">${usuario.nome || usuario.email}</span>
-                    </div>
-                    <span class="admin-item__badge">Você</span>
-                </li>
-                <li style="padding: var(--spacing-md); color: var(--color-text-muted); font-size: 14px; text-align: center;">
-                    Para adicionar novos administradores, use o formulário acima.
-                </li>
-            `;
+            if (admins.length === 0) {
+                lista.innerHTML = '<li class="loading">Nenhum administrador cadastrado</li>';
+                return;
+            }
+
+            lista.innerHTML = admins.map(admin => {
+                const isVoce = usuarioAtual && usuarioAtual.email.toLowerCase() === admin.email.toLowerCase();
+                return `
+                    <li class="admin-item">
+                        <div class="admin-item__email">
+                            ${iconUser}
+                            <span style="margin-left: 8px;">${admin.nome}</span>
+                            <small style="display: block; margin-left: 26px; color: var(--color-text-muted); font-size: 11px; text-transform: none;">${admin.email}</small>
+                        </div>
+                        ${isVoce ? '<span class="admin-item__badge">Você</span>' : ''}
+                    </li>
+                `;
+            }).join('');
+
         } catch (error) {
-            lista.innerHTML = '<li class="loading">Erro ao carregar</li>';
+            lista.innerHTML = '<li class="loading">Erro ao carregar lista de administradores</li>';
             console.error(error);
         }
     },
@@ -783,6 +826,7 @@ const App = {
     async handleAdicionarAdmin(e) {
         e.preventDefault();
 
+        const nome = document.getElementById('novo-admin-nome').value.toUpperCase();
         const email = document.getElementById('novo-admin-email').value;
         const senha = document.getElementById('novo-admin-senha').value;
         const erroEl = document.getElementById('add-admin-erro');
@@ -790,8 +834,14 @@ const App = {
         erroEl.classList.add('hidden');
 
         try {
-            await Auth.adicionarAdmin(email, senha);
-            this.mostrarToast(`Administrador ${email} adicionado com sucesso!`);
+            const result = await Auth.adicionarAdmin(nome, email, senha);
+
+            if (result.status === 'authorized') {
+                this.mostrarToast(`Email ${email} já existente, mas agora está autorizado como admin!`);
+            } else {
+                this.mostrarToast(`Administrador ${nome} adicionado com sucesso!`);
+            }
+
             document.getElementById('form-add-admin').reset();
             await this.abrirGerenciarAdmins();
         } catch (error) {
@@ -803,9 +853,13 @@ const App = {
     /**
      * Abre modal para adicionar responsável
      */
+    /**
+     * Abre modal para adicionar responsável
+     */
     abrirAdicionarResponsavel() {
+        this.responsavelEmEdicao = null;
         document.getElementById('responsavel-nome').value = '';
-        document.getElementById('responsavel-nome-antigo').value = '';
+        document.getElementById('responsavel-telefone').value = '';
         document.getElementById('modal-responsavel-titulo').textContent = 'Adicionar Responsável';
         document.getElementById('btn-salvar-responsavel').textContent = 'Adicionar';
         this.abrirModal('modal-responsavel');
@@ -814,9 +868,10 @@ const App = {
     /**
      * Abre modal para editar responsável
      */
-    abrirEditarResponsavel(nome) {
+    abrirEditarResponsavel(nome, telefone) {
+        this.responsavelEmEdicao = { nome, telefone };
         document.getElementById('responsavel-nome').value = nome;
-        document.getElementById('responsavel-nome-antigo').value = nome;
+        document.getElementById('responsavel-telefone').value = telefone || '';
         document.getElementById('modal-responsavel-titulo').textContent = 'Editar Responsável';
         document.getElementById('btn-salvar-responsavel').textContent = 'Salvar';
         this.abrirModal('modal-responsavel');
@@ -825,13 +880,14 @@ const App = {
     /**
      * Confirma remoção de responsável
      */
-    async confirmarRemoverResponsavel(nome) {
+    async confirmarRemoverResponsavel(nome, telefone) {
         if (!confirm(`Remover o responsável "${nome}"?`)) {
             return;
         }
 
         try {
-            await DB.removeResponsavel(this.setorAtual, nome);
+            const responsavel = { nome, telefone };
+            await DB.removeResponsavel(this.setorAtual, responsavel);
             this.mostrarToast('Responsável removido!');
             await this.abrirSetor(this.setorAtual);
         } catch (error) {
@@ -847,11 +903,17 @@ const App = {
         e.preventDefault();
 
         const nome = document.getElementById('responsavel-nome').value.trim().toUpperCase();
-        const nomeAntigo = document.getElementById('responsavel-nome-antigo').value;
+        const telefone = document.getElementById('responsavel-telefone').value.trim();
         const erroEl = document.getElementById('responsavel-erro');
 
-        if (!nome) {
-            erroEl.textContent = 'Digite o nome do responsável';
+        if (!nome || !telefone) {
+            erroEl.textContent = 'Preencha nome e celular';
+            erroEl.classList.remove('hidden');
+            return;
+        }
+
+        if (telefone.length < 10) {
+            erroEl.textContent = 'Celular inválido';
             erroEl.classList.remove('hidden');
             return;
         }
@@ -859,13 +921,15 @@ const App = {
         erroEl.classList.add('hidden');
 
         try {
-            if (nomeAntigo) {
+            const novoResponsavel = { nome, telefone };
+
+            if (this.responsavelEmEdicao) {
                 // Editando
-                await DB.editarResponsavel(this.setorAtual, nomeAntigo, nome);
+                await DB.editarResponsavel(this.setorAtual, this.responsavelEmEdicao, novoResponsavel);
                 this.mostrarToast('Responsável atualizado!');
             } else {
                 // Adicionando
-                await DB.addResponsavel(this.setorAtual, nome);
+                await DB.addResponsavel(this.setorAtual, novoResponsavel);
                 this.mostrarToast('Responsável adicionado!');
             }
 
