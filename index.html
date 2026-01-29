@@ -286,7 +286,7 @@
                 <div class="form__group">
                     <label for="novo-admin-nome" class="form__label">Nome Completo</label>
                     <input type="text" id="novo-admin-nome" class="form__input input-uppercase"
-                        placeholder="EX: IGOR COSTA GERLACH" required>
+                        placeholder="SEU NOME COMPLETO" required>
                 </div>
                 <div class="form__group">
                     <label for="novo-admin-email" class="form__label">Email</label>
@@ -319,6 +319,7 @@
             <h2 class="modal__title" id="modal-responsavel-titulo">Adicionar Responsável</h2>
             <form id="form-responsavel" class="form">
                 <input type="hidden" id="responsavel-nome-antigo">
+                <input type="hidden" id="responsavel-telefone-antigo">
                 <div class="form__group">
                     <label for="responsavel-nome" class="form__label">Nome do Responsável</label>
                     <input type="text" id="responsavel-nome" class="form__input input-uppercase"
@@ -335,9 +336,28 @@
         </div>
     </div>
 
+    <!-- Modal: Remover Responsável -->
+    <div class="modal" id="modal-remover-responsavel">
+        <div class="modal__overlay" data-close-modal></div>
+        <div class="modal__content modal__content--small">
+            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
+            <h2 class="modal__title">Remover Responsável</h2>
+            <p class="modal__text" id="remover-responsavel-texto">Deseja remover este responsável?</p>
+            <form id="form-remover-responsavel" class="form">
+                <input type="hidden" id="remover-responsavel-nome">
+                <input type="hidden" id="remover-responsavel-telefone">
+                <div class="form__actions">
+                    <button type="button" class="btn btn--outline btn--full" data-close-modal>Cancelar</button>
+                    <button type="submit" class="btn btn--danger btn--full">Remover</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
     <div class="toast hidden" id="toast">
         <span id="toast-message"></span>
+        <button class="toast__close" id="btn-close-toast" aria-label="Fechar">&times;</button>
     </div>
 
     <!-- Scripts -->

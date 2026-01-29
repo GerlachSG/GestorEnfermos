@@ -199,11 +199,45 @@ const Auth = {
     async loginAdminGoogle() {
         try {
             const provider = new firebase.auth.GoogleAuthProvider();
-            const result = await auth.signInWithPopup(provider);
+            // Adiciona escopos explicitamente para garantir que o e-mail venha
+            provider.addScope('email');
+            provider.addScope('profile');
+
+            // Garante que o usuário possa escolher a conta toda vez
+            provider.setCustomParameters({ prompt: 'select_account' });
+
+            const result = await auth.signInWithPopup(provider).catch(error => {
+                // Se der erro de credencial já existente, podemos tentar vincular ou dar instrução
+                if (error.code === 'auth/account-exists-with-different-credential') {
+                    throw new Error('E-mail já vinculado a outro método (Senha). Use o login por e-mail e senha.');
+                }
+                throw error;
+            });
+
             const user = result.user;
+            let email = user.email;
+
+            // Se o e-mail principal for nulo, tenta buscar nos provedores vinculados
+            if (!email && user.providerData && user.providerData.length > 0) {
+                const googleData = user.providerData.find(p => p.providerId === 'google.com');
+                if (googleData) email = googleData.email;
+            }
+
+            if (!email) {
+                // Se ainda for nulo, tenta pegar do objeto de perfil adicional
+                const additionalUserInfo = result.additionalUserInfo;
+                if (additionalUserInfo && additionalUserInfo.profile) {
+                    email = additionalUserInfo.profile.email;
+                }
+            }
+
+            if (!email) {
+                await auth.signOut();
+                throw new Error('Não foi possível obter o e-mail da sua conta Google. Verifique se o seu perfil Google permite compartilhar o e-mail.');
+            }
 
             // Verifica se o email está cadastrado como admin no Firestore
-            const isAdmin = await DB.verificarEmailAdmin(user.email);
+            const isAdmin = await DB.verificarEmailAdmin(email);
             if (!isAdmin) {
                 // Faz logout do Firebase Auth pois o usuário não é admin
                 await auth.signOut();
@@ -211,13 +245,13 @@ const Auth = {
             }
 
             // Busca os dados do admin no Firestore para pegar o nome correto
-            const adminDoc = await db.collection('admins').where('email', '==', user.email.toLowerCase()).limit(1).get();
+            const adminDoc = await db.collection('admins').where('email', '==', email.toLowerCase()).limit(1).get();
             const adminData = adminDoc.docs[0].data();
 
             // Salva a sessão
             const usuario = {
-                nome: adminData.nome || user.displayName || user.email.split('@')[0],
-                email: user.email,
+                nome: adminData.nome || user.displayName || email.split('@')[0],
+                email: email,
                 uid: user.uid,
                 photoURL: user.photoURL,
                 setorId: null,

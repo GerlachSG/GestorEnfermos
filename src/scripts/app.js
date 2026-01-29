@@ -55,17 +55,23 @@ const App = {
 
         // Fechar modais
         document.querySelectorAll('[data-close-modal]').forEach(el => {
-            el.addEventListener('click', () => this.fecharUltimoModal());
+            el.addEventListener('click', async () => await this.fecharUltimoModal());
         });
+
+        // Formulário de Remover Responsável
+        const formRemoverResp = document.getElementById('form-remover-responsavel');
+        if (formRemoverResp) {
+            formRemoverResp.addEventListener('submit', (e) => this.handleRemoverResponsavel(e));
+        }
 
         // Fechar modais voltando para o setor
         document.querySelectorAll('[data-close-to-setor]').forEach(el => {
-            el.addEventListener('click', () => this.fecharModalVoltarSetor());
+            el.addEventListener('click', async () => await this.fecharModalVoltarSetor());
         });
 
         // ESC para fechar modais
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') this.fecharUltimoModal();
+        document.addEventListener('keydown', async (e) => {
+            if (e.key === 'Escape') await this.fecharUltimoModal();
         });
 
         // Formulário de login responsável
@@ -175,8 +181,8 @@ const App = {
             // SVG icon for pending badge
             const iconPendingBadge = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
 
-            container.innerHTML = this.setores.map(setor => `
-                <article class="setor-card" data-setor-id="${setor.id}">
+            container.innerHTML = this.setores.map((setor, index) => `
+                <article class="setor-card" data-setor-id="${setor.id}" style="animation-delay: ${index * 50}ms">
                     <h2 class="setor-card__nome">${setor.nome}</h2>
                     <p class="setor-card__horario">${setor.horario}</p>
                     <div class="setor-card__info">
@@ -286,7 +292,7 @@ const App = {
                 const iconRemove = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
                 const iconPending = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
 
-                listaEnfermos.innerHTML = enfermos.map(e => {
+                listaEnfermos.innerHTML = enfermos.map((e, index) => {
                     const isPendente = e.status !== 'ativo';
                     const statusTexto = e.status === 'pendente_remocao'
                         ? `${iconPending}Remoção pendente: ${e.motivoPendencia}`
@@ -295,7 +301,7 @@ const App = {
                             : '';
 
                     return `
-                        <li class="enfermo-item ${isPendente ? 'enfermo-item--pendente' : ''}">
+                        <li class="enfermo-item ${isPendente ? 'enfermo-item--pendente' : ''}" style="animation-delay: ${index * 50}ms">
                             <div class="enfermo-item__info">
                                 <div class="enfermo-item__nome">${e.nome}</div>
                                 <div class="enfermo-item__idade">${e.idade} ANOS</div>
@@ -355,7 +361,6 @@ const App = {
         const usuario = Auth.getUsuario();
 
         if (!usuario) {
-            this.fecharTodosModais();
             this.abrirModal('modal-login');
             return;
         }
@@ -372,7 +377,6 @@ const App = {
         const usuario = Auth.getUsuario();
 
         if (!usuario) {
-            this.fecharTodosModais();
             this.abrirModal('modal-login');
             return;
         }
@@ -393,7 +397,6 @@ const App = {
         const usuario = Auth.getUsuario();
 
         if (!usuario) {
-            this.fecharTodosModais();
             this.abrirModal('modal-login');
             return;
         }
@@ -436,14 +439,14 @@ const App = {
             const iconCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
             const iconX = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
-            lista.innerHTML = pendencias.map(p => {
+            lista.innerHTML = pendencias.map((p, index) => {
                 const tipo = p.status === 'pendente_remocao' ? 'Remoção' : 'Edição';
                 const detalhe = p.status === 'pendente_remocao'
                     ? `Motivo: ${p.motivoPendencia}`
                     : `Novo: ${p.edicaoPendente.nome} - ${p.edicaoPendente.idade} ANOS - ${p.edicaoPendente.endereco}`;
 
                 return `
-                    <li class="pendencia-item">
+                    <li class="pendencia-item" style="animation: slideUp var(--transition-smooth) backwards; animation-delay: ${index * 50}ms">
                         <div class="pendencia-item__header">
                             <span class="pendencia-item__tipo">${tipo}</span>
                             <span class="pendencia-item__setor">${p.setorNome}</span>
@@ -500,7 +503,7 @@ const App = {
             this.mostrarToast('Identificação confirmada!');
 
             this.atualizarUI();
-            this.fecharTodosModais();
+            await this.fecharTodosModais();
 
             // Se estava tentando editar/remover, reabre o setor
             if (this.setorAtual) {
@@ -530,7 +533,7 @@ const App = {
             this.mostrarToast('Bem-vindo, administrador!');
 
             this.atualizarUI();
-            this.fecharTodosModais();
+            await this.fecharTodosModais();
 
         } catch (error) {
             erroEl.textContent = error.message || 'Email ou senha incorretos';
@@ -552,7 +555,7 @@ const App = {
         try {
             await DB.addEnfermo(setorId, { nome, endereco, idade });
             this.mostrarToast('Enfermo adicionado com sucesso!');
-            this.fecharModal('modal-adicionar');
+            await this.fecharModal('modal-adicionar');
             await this.abrirSetor(setorId);
             await this.carregarSetores();
         } catch (error) {
@@ -582,7 +585,7 @@ const App = {
                 await DB.solicitarEdicao(setorId, enfermoId, { nome, endereco, idade });
                 this.mostrarToast('Edição solicitada. Aguardando aprovação.');
             }
-            this.fecharModal('modal-editar');
+            await this.fecharModal('modal-editar');
             await this.abrirSetor(setorId);
             await this.carregarSetores();
         } catch (error) {
@@ -622,7 +625,7 @@ const App = {
                 await DB.solicitarRemocao(setorId, enfermoId, motivo);
                 this.mostrarToast('Remoção solicitada. Aguardando aprovação.');
             }
-            this.fecharModal('modal-remover');
+            await this.fecharModal('modal-remover');
             await this.abrirSetor(setorId);
             await this.carregarSetores();
         } catch (error) {
@@ -701,40 +704,66 @@ const App = {
     /**
      * Fecha um modal específico
      */
-    fecharModal(modalId) {
+    async fecharModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
+            modal.classList.add('closing');
+
+            // Espera a animação acabar (smooth transition é 500ms)
+            await new Promise(resolve => setTimeout(resolve, 500));
+
             modal.classList.remove('active');
+            modal.classList.remove('closing');
+
             // Remove da pilha
             this.modalStack = this.modalStack.filter(id => id !== modalId);
         }
+
+        // Remove estado de edição de qualquer responsável
+        document.querySelectorAll('.responsavel-item--editing').forEach(el => {
+            el.classList.remove('responsavel-item--editing');
+        });
     },
 
     /**
      * Fecha o último modal aberto (pilha)
      */
-    fecharUltimoModal() {
+    async fecharUltimoModal() {
         if (this.modalStack.length > 0) {
             const modalId = this.modalStack.pop();
-            document.getElementById(modalId).classList.remove('active');
+            await this.fecharModal(modalId);
         }
+
+        // Sempre remove estado de edição ao fechar qualquer modal
+        document.querySelectorAll('.responsavel-item--editing').forEach(el => {
+            el.classList.remove('responsavel-item--editing');
+        });
     },
 
-    /**
-     * Fecha todos os modais
-     */
-    fecharTodosModais() {
+    async fecharTodosModais() {
+        const modaisAtivos = document.querySelectorAll('.modal.active');
+        if (modaisAtivos.length > 0) {
+            modaisAtivos.forEach(m => m.classList.add('closing'));
+            await new Promise(resolve => setTimeout(resolve, 500));
+        }
+
         document.querySelectorAll('.modal').forEach(modal => {
             modal.classList.remove('active');
+            modal.classList.remove('closing');
         });
         this.modalStack = [];
+
+        // Limpa estado de edição
+        document.querySelectorAll('.responsavel-item--editing').forEach(el => {
+            el.classList.remove('responsavel-item--editing');
+        });
     },
 
     /**
      * Fecha modal atual e volta para o setor
      */
-    fecharModalVoltarSetor() {
-        this.fecharUltimoModal();
+    async fecharModalVoltarSetor() {
+        await this.fecharUltimoModal();
 
         // Se após fechar o último não houver nada na pilha, mas temos um setor atual, reabre o setor
         if (this.modalStack.length === 0 && this.setorAtual) {
@@ -742,12 +771,10 @@ const App = {
         }
     },
 
-    /**
-     * Mostra uma notificação toast
-     */
     mostrarToast(mensagem, tipo = 'success') {
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
+        const closeBtn = document.getElementById('btn-close-toast');
 
         toast.className = 'toast';
         toast.classList.add(`toast--${tipo}`);
@@ -755,9 +782,21 @@ const App = {
 
         toast.classList.remove('hidden');
 
-        setTimeout(() => {
+        // Limpa o timer anterior se houver
+        if (this.toastTimer) clearTimeout(this.toastTimer);
+
+        // Define novo timer para 10 segundos
+        this.toastTimer = setTimeout(() => {
             toast.classList.add('hidden');
-        }, 3000);
+        }, 10000);
+
+        // Configura o botão de fechar
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                toast.classList.add('hidden');
+                if (this.toastTimer) clearTimeout(this.toastTimer);
+            };
+        }
     },
 
     /**
@@ -768,7 +807,7 @@ const App = {
             await Auth.loginAdminGoogle();
             this.mostrarToast('Bem-vindo, administrador!');
             this.atualizarUI();
-            this.fecharTodosModais();
+            await this.fecharTodosModais();
         } catch (error) {
             this.mostrarToast(error.message || 'Erro ao fazer login com Google', 'error');
         }
@@ -800,13 +839,15 @@ const App = {
                 return;
             }
 
-            lista.innerHTML = admins.map(admin => {
+            lista.innerHTML = admins.map((admin, index) => {
                 const isVoce = usuarioAtual && usuarioAtual.email.toLowerCase() === admin.email.toLowerCase();
+                const nomeExibicao = admin.nome || admin.email.split('@')[0].toUpperCase();
+
                 return `
-                    <li class="admin-item">
+                    <li class="admin-item" style="animation: slideUp var(--transition-smooth) backwards; animation-delay: ${index * 50}ms">
                         <div class="admin-item__email">
                             ${iconUser}
-                            <span style="margin-left: 8px;">${admin.nome}</span>
+                            <span style="margin-left: 8px;">${nomeExibicao}</span>
                             <small style="display: block; margin-left: 26px; color: var(--color-text-muted); font-size: 11px; text-transform: none;">${admin.email}</small>
                         </div>
                         ${isVoce ? '<span class="admin-item__badge">Você</span>' : ''}
@@ -869,6 +910,17 @@ const App = {
      * Abre modal para editar responsável
      */
     abrirEditarResponsavel(nome, telefone) {
+        // Remove edição anterior se houver
+        document.querySelectorAll('.responsavel-item--editing').forEach(el => el.classList.remove('responsavel-item--editing'));
+
+        // Encontra o item na lista para destacar
+        const itens = document.querySelectorAll('.responsavel-item');
+        itens.forEach(item => {
+            if (item.dataset.responsavel === nome) {
+                item.classList.add('responsavel-item--editing');
+            }
+        });
+
         this.responsavelEmEdicao = { nome, telefone };
         document.getElementById('responsavel-nome').value = nome;
         document.getElementById('responsavel-telefone').value = telefone || '';
@@ -878,16 +930,28 @@ const App = {
     },
 
     /**
-     * Confirma remoção de responsável
+     * Abre modal de confirmação de remoção
      */
-    async confirmarRemoverResponsavel(nome, telefone) {
-        if (!confirm(`Remover o responsável "${nome}"?`)) {
-            return;
-        }
+    confirmarRemoverResponsavel(nome, telefone) {
+        document.getElementById('remover-responsavel-nome').value = nome;
+        document.getElementById('remover-responsavel-telefone').value = telefone || '';
+        document.getElementById('remover-responsavel-texto').innerHTML = `Deseja remover o responsável <strong>${nome}</strong>?`;
+        this.abrirModal('modal-remover-responsavel');
+    },
+
+    /**
+     * Executa a remoção do responsável
+     */
+    async handleRemoverResponsavel(e) {
+        e.preventDefault();
+
+        const nome = document.getElementById('remover-responsavel-nome').value;
+        const telefone = document.getElementById('remover-responsavel-telefone').value;
 
         try {
             const responsavel = { nome, telefone };
             await DB.removeResponsavel(this.setorAtual, responsavel);
+            await this.fecharModal('modal-remover-responsavel');
             this.mostrarToast('Responsável removido!');
             await this.abrirSetor(this.setorAtual);
         } catch (error) {
@@ -933,7 +997,7 @@ const App = {
                 this.mostrarToast('Responsável adicionado!');
             }
 
-            this.fecharModal('modal-responsavel');
+            await this.fecharModal('modal-responsavel');
             await this.abrirSetor(this.setorAtual);
         } catch (error) {
             erroEl.textContent = 'Erro ao salvar responsável';

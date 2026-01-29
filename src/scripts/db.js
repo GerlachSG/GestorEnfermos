@@ -264,6 +264,8 @@ const DB = {
      * @returns {Promise<boolean>} True se for admin
      */
     async verificarEmailAdmin(email) {
+        if (!email) return false;
+
         try {
             const snapshot = await db.collection('admins')
                 .where('email', '==', email.toLowerCase())
@@ -315,11 +317,18 @@ const DB = {
      */
     async listarAdmins() {
         try {
-            const snapshot = await db.collection('admins').orderBy('nome').get();
-            return snapshot.docs.map(doc => ({
+            const snapshot = await db.collection('admins').get();
+            const admins = snapshot.docs.map(doc => ({
                 id: doc.id,
                 ...doc.data()
             }));
+
+            // Ordena em memória para não excluir documentos sem o campo 'nome'
+            return admins.sort((a, b) => {
+                const nomeA = (a.nome || '').toUpperCase();
+                const nomeB = (b.nome || '').toUpperCase();
+                return nomeA.localeCompare(nomeB);
+            });
         } catch (error) {
             console.error('Erro ao listar admins do Firestore:', error);
             throw error;
