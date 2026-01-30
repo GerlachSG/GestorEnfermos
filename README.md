@@ -57,7 +57,6 @@ Este sistema serve à comunidade da **Paróquia São Bento** (São José dos Cam
   <br>
   <em>"A internet pode ser usada para o bem ou para o mal, depende de nós."</em>
   <br>
-  <strong>— Beato Carlo Acutis</strong>
+  <strong>— São Carlo Acutis</strong>
   <br><br>
-  <sub>São Carlo Acutis, rogai por nós. 🙏</sub>
 </div>
