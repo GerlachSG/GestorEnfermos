@@ -162,6 +162,30 @@ const DB = {
     },
 
     /**
+     * Solicita adição de um novo enfermo (marca como pendente)
+     * @param {string} setorId - ID do setor
+     * @param {Object} dados - { nome, endereco, idade }
+     */
+    async solicitarAdicao(setorId, dados) {
+        try {
+            await db
+                .collection('setores')
+                .doc(setorId)
+                .collection('enfermos')
+                .add({
+                    nome: dados.nome,
+                    endereco: dados.endereco,
+                    idade: dados.idade,
+                    status: 'pendente_adicao',
+                    dataPendencia: firebase.firestore.FieldValue.serverTimestamp()
+                });
+        } catch (error) {
+            console.error('Erro ao solicitar adição:', error);
+            throw error;
+        }
+    },
+
+    /**
      * Busca todas as pendências (para admin)
      * @returns {Promise<Array>} Lista de pendências de todos os setores
      */
@@ -177,7 +201,7 @@ const DB = {
                     .collection('setores')
                     .doc(setorDoc.id)
                     .collection('enfermos')
-                    .where('status', 'in', ['pendente_remocao', 'pendente_edicao'])
+                    .where('status', 'in', ['pendente_remocao', 'pendente_edicao', 'pendente_adicao'])
                     .get();
 
                 for (const enfermoDoc of enfermosSnapshot.docs) {
@@ -226,6 +250,13 @@ const DB = {
                     status: 'ativo',
                     edicaoPendente: firebase.firestore.FieldValue.delete(),
                     dataPendencia: firebase.firestore.FieldValue.delete()
+                });
+            } else if (tipo === 'adicao') {
+                // Torna o enfermo ativo
+                await enfermoRef.update({
+                    status: 'ativo',
+                    dataPendencia: firebase.firestore.FieldValue.delete(),
+                    dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
                 });
             }
         } catch (error) {

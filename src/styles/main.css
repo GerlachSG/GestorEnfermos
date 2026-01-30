@@ -26,12 +26,17 @@
     --color-border-light: #ebe8e3;
 
     --color-danger: #c45c5c;
-    --color-danger-light: #f5e8e8;
+    --color-danger-light: #fbeaea;
+    --color-danger-soft: #f8dbdb;
 
     --color-warning: #d4a853;
     --color-warning-light: #faf3e0;
 
     --color-success: #5a9a6a;
+    --color-success-light: #ebf5ee;
+    --color-success-soft: #ddead1;
+
+    --color-primary-soft: #edf2ef;
 
     /* Tipografia Ajustada para Caixa Alta */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -68,12 +73,13 @@
 /* ----------------------------------------
    Reset & Base
    ---------------------------------------- */
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
+/* Base Reset */
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    /* Remove o brilho azul no mobile ao clicar */
 }
 
 html {
@@ -119,43 +125,51 @@ input[type="password"],
    ---------------------------------------- */
 .header {
     background: var(--color-surface);
-    padding: var(--spacing-md) var(--spacing-md);
+    padding: var(--spacing-lg) 0;
     border-bottom: 1px solid var(--color-border-light);
     position: sticky;
     top: 0;
     z-index: 10;
+}
+
+.header__container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 var(--spacing-md);
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    gap: var(--spacing-md);
+    align-items: flex-start;
 }
 
 .header__left {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
     text-align: left;
 }
 
-.header__title {
-    font-size: var(--font-size-xl);
-    font-weight: 700;
-    /* Mais peso para título principal */
-    color: var(--color-primary-dark);
-    margin-bottom: 2px;
-    letter-spacing: 0.08em;
+.header__logo {
+    height: 100px;
+    width: auto;
+    display: block;
+    margin-bottom: 24px;
+    /* Aumentado conforme solicitado */
 }
 
 .header__subtitle {
     font-size: var(--font-size-sm);
     color: var(--color-text-light);
-    font-weight: 500;
+    font-weight: 600;
     margin: 0;
+    opacity: 0.9;
 }
 
 .header__right {
     display: flex;
-    align-items: center;
+    flex-direction: column;
+    align-items: flex-end;
     gap: var(--spacing-xs);
     flex-wrap: wrap;
-    justify-content: flex-end;
 }
 
 /* ----------------------------------------
@@ -169,57 +183,70 @@ input[type="password"],
     padding: var(--spacing-sm) var(--spacing-md);
     font-family: inherit;
     font-size: var(--font-size-sm);
-    font-weight: 500;
+    font-weight: 600;
     border-radius: var(--radius-sm);
     border: none;
     cursor: pointer;
-    transition: all var(--transition-fast);
-    min-height: 48px;
-    min-width: 48px;
+    transition: all var(--transition-normal);
+    min-height: 44px;
+    letter-spacing: 0.02em;
 }
 
 .btn--primary {
-    background: var(--color-primary);
-    color: white;
+    background: var(--color-primary-soft);
+    color: var(--color-primary-dark);
 }
 
 .btn--primary:hover {
-    background: var(--color-primary-dark);
+    background: var(--color-primary-light);
+    color: white;
+}
+
+.btn--success {
+    background: var(--color-success-light);
+    color: #3e6d4a;
+    border: 1px solid var(--color-success-soft);
+}
+
+.btn--success:hover {
+    background: var(--color-success-soft);
+}
+
+.btn--danger {
+    background: var(--color-danger-light);
+    color: #9e4646;
+    border: 1px solid var(--color-danger-soft);
+}
+
+.btn--danger:hover {
+    background: var(--color-danger-soft);
 }
 
 .btn--outline {
     background: transparent;
-    color: var(--color-primary);
-    border: 1px solid var(--color-primary);
+    color: var(--color-text-light);
+    border: 1px solid var(--color-border);
 }
 
 .btn--outline:hover {
-    background: var(--color-primary);
-    color: white;
+    background: var(--color-background);
+    border-color: var(--color-text-muted);
 }
 
 .btn--text {
     background: transparent;
-    color: var(--color-primary);
+    color: var(--color-text-light);
 }
 
 .btn--text:hover {
     background: var(--color-surface-hover);
-}
-
-.btn--danger {
-    background: var(--color-danger);
-    color: white;
-}
-
-.btn--danger:hover {
-    background: #b04a4a;
+    color: var(--color-primary);
 }
 
 .btn--small {
     padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 14px;
-    min-height: 40px;
+    font-size: 13px;
+    min-height: 36px;
 }
 
 .btn--full {
@@ -255,16 +282,18 @@ input[type="password"],
 
 /* Header buttons with semi-transparent background */
 .btn--header {
-    background: rgba(128, 128, 128, 0.12);
-    color: var(--color-text);
+    background: var(--color-primary-soft);
+    color: var(--color-primary-dark);
     padding: var(--spacing-xs) var(--spacing-sm);
-    font-size: 14px;
+    font-size: 13px;
+    font-weight: 600;
     min-height: 40px;
     gap: 6px;
 }
 
 .btn--header:hover {
-    background: rgba(128, 128, 128, 0.2);
+    background: var(--color-primary-light);
+    color: white;
 }
 
 .btn--header svg {
@@ -274,15 +303,16 @@ input[type="password"],
 /* Icon button with gray background */
 .btn--icon-bg {
     padding: var(--spacing-xs);
-    background: rgba(128, 128, 128, 0.15);
-    color: var(--color-text);
+    background: var(--color-primary-soft);
+    color: var(--color-primary-dark);
     border-radius: var(--radius-sm);
     min-height: 44px;
     min-width: 44px;
 }
 
 .btn--icon-bg:hover {
-    background: rgba(128, 128, 128, 0.25);
+    background: var(--color-primary-light);
+    color: white;
 }
 
 .btn--icon-bg svg {
@@ -492,7 +522,8 @@ input[type="password"],
     position: absolute;
     top: var(--spacing-md);
     right: var(--spacing-md);
-    background: transparent;
+    background: rgba(128, 128, 128, 0.08);
+    /* Mesma estética dos cards de seção */
     border: none;
     font-size: 28px;
     color: var(--color-text-muted);
@@ -504,11 +535,14 @@ input[type="password"],
     justify-content: center;
     border-radius: 50%;
     z-index: 1001;
+    transition: all var(--transition-fast);
 }
 
 .modal__close:hover {
     background: var(--color-surface-hover);
     color: var(--color-text);
+    transform: scale(1.05);
+    /* Leve feedback visual */
 }
 
 .modal__title {
@@ -583,6 +617,14 @@ input[type="password"],
     padding-top: var(--spacing-md);
     overflow-y: auto;
     flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal__actions--center {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-md) 0;
 }
 
 /* Section card with gray background */

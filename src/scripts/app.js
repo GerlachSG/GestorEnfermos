@@ -298,7 +298,9 @@ const App = {
                         ? `${iconPending}Remoção pendente: ${e.motivoPendencia}`
                         : e.status === 'pendente_edicao'
                             ? `${iconPending}Edição pendente`
-                            : '';
+                            : e.status === 'pendente_adicao'
+                                ? `${iconPending}Inclusão pendente`
+                                : '';
 
                     return `
                         <li class="enfermo-item ${isPendente ? 'enfermo-item--pendente' : ''}" style="animation-delay: ${index * 50}ms">
@@ -310,8 +312,8 @@ const App = {
                             </div>
                             ${!isPendente ? `
                                 <div class="enfermo-item__actions">
-                                    <button class="btn btn--icon-trans btn--small" data-editar="${e.id}" title="Editar">${iconEdit}</button>
-                                    <button class="btn btn--icon-trans btn--small" data-remover="${e.id}" title="Remover">${iconRemove}</button>
+                                    <button class="btn btn--primary btn--small" data-editar="${e.id}" title="Editar">${iconEdit}</button>
+                                    <button class="btn btn--danger btn--small" data-remover="${e.id}" title="Remover">${iconRemove}</button>
                                 </div>
                             ` : ''}
                         </li>
@@ -338,13 +340,9 @@ const App = {
                 });
             }
 
-            // Botão de adicionar
+            // Botão de adicionar (Sempre visível agora)
             const btnAdd = document.getElementById('btn-add-enfermo');
-            if (podeEditar) {
-                btnAdd.classList.remove('hidden');
-            } else {
-                btnAdd.classList.add('hidden');
-            }
+            btnAdd.classList.remove('hidden');
 
             this.abrirModal('modal-setor');
 
@@ -440,10 +438,12 @@ const App = {
             const iconX = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
 
             lista.innerHTML = pendencias.map((p, index) => {
-                const tipo = p.status === 'pendente_remocao' ? 'Remoção' : 'Edição';
+                const tipo = p.status === 'pendente_remocao' ? 'Remoção' : p.status === 'pendente_edicao' ? 'Edição' : 'Inclusão';
                 const detalhe = p.status === 'pendente_remocao'
                     ? `Motivo: ${p.motivoPendencia}`
-                    : `Novo: ${p.edicaoPendente.nome} - ${p.edicaoPendente.idade} ANOS - ${p.edicaoPendente.endereco}`;
+                    : p.status === 'pendente_edicao'
+                        ? `Novo: ${p.edicaoPendente.nome} - ${p.edicaoPendente.idade} ANOS - ${p.edicaoPendente.endereco}`
+                        : `Dados: ${p.nome} - ${p.idade} ANOS - ${p.endereco}`;
 
                 return `
                     <li class="pendencia-item" style="animation: slideUp var(--transition-smooth) backwards; animation-delay: ${index * 50}ms">
@@ -454,10 +454,10 @@ const App = {
                         <div class="pendencia-item__nome">${p.nome}</div>
                         <div class="pendencia-item__detalhe">${detalhe}</div>
                         <div class="pendencia-item__actions">
-                            <button class="btn btn--primary btn--small" data-aprovar="${p.setorId}|${p.enfermoId}|${p.status === 'pendente_remocao' ? 'remocao' : 'edicao'}">
+                            <button class="btn btn--success btn--small" data-aprovar="${p.setorId}|${p.enfermoId}|${p.status === 'pendente_remocao' ? 'remocao' : p.status === 'pendente_edicao' ? 'edicao' : 'adicao'}">
                                 ${iconCheck} Aprovar
                             </button>
-                            <button class="btn btn--outline btn--small" data-rejeitar="${p.setorId}|${p.enfermoId}">
+                            <button class="btn btn--danger btn--small" data-rejeitar="${p.setorId}|${p.enfermoId}">
                                 ${iconX} Rejeitar
                             </button>
                         </div>
@@ -552,14 +552,35 @@ const App = {
         const endereco = document.getElementById('adicionar-endereco').value.toUpperCase();
         const idade = document.getElementById('adicionar-idade').value;
 
+        const usuario = Auth.getUsuario();
+
+        // Se não estiver logado, pede identificação
+        if (!usuario) {
+            this.abrirModal('modal-login');
+            return;
+        }
+
         try {
-            await DB.addEnfermo(setorId, { nome, endereco, idade });
-            this.mostrarToast('Enfermo adicionado com sucesso!');
+            // Se for admin, adiciona direto
+            if (usuario.isAdmin) {
+                await DB.addEnfermo(setorId, { nome, endereco, idade });
+                this.mostrarToast('Enfermo adicionado com sucesso!');
+            }
+            // Se for o responsável do setor, entra como pendência de adição
+            else if (usuario.setorId === setorId) {
+                await DB.solicitarAdicao(setorId, { nome, endereco, idade });
+                this.mostrarToast('Inclusão solicitada para aprovação do administrador.');
+            }
+            // Não é admin nem responsável deste setor
+            else {
+                throw new Error('Você não tem permissão para adicionar enfermos neste setor.');
+            }
+
             await this.fecharModal('modal-adicionar');
             await this.abrirSetor(setorId);
             await this.carregarSetores();
         } catch (error) {
-            this.mostrarToast('Erro ao adicionar enfermo', 'error');
+            this.mostrarToast(error.message || 'Erro ao adicionar enfermo', 'error');
             console.error(error);
         }
     },
