@@ -2,9 +2,7 @@
 
 > Solução digital desenvolvida para a **Pastoral da Saúde da Paróquia São Bento** em São José dos Campos - SP.
 
-<div align="center">
 [![Acessar Sistema](https://img.shields.io/badge/ACESSAR_SISTEMA-4CAF50?style=for-the-badge)](https://gerlachsg.github.io/GestorEnfermos/)
-</div>
 
 ---
 
