@@ -137,7 +137,7 @@
                 <div class="form__group">
                     <label for="login-telefone" class="form__label">Seu celular</label>
                     <input type="tel" id="login-telefone" class="form__input input-phone" placeholder="12 99999-9999"
-                        maxlength="13" required>
+                        maxlength="15" required>
                 </div>
                 <p id="login-erro" class="form__error hidden">Nome ou telefone incorretos</p>
                 <button type="submit" class="btn btn--success btn--full">Confirmar</button>
@@ -220,7 +220,7 @@
                 <div class="form__group">
                     <label for="editar-telefone" class="form__label">Telefone</label>
                     <input type="tel" id="editar-telefone" class="form__input input-phone" placeholder="12 99999-9999"
-                        maxlength="13" required>
+                        maxlength="15" required>
                 </div>
                 <button type="submit" class="btn btn--primary btn--full">Solicitar Alteração</button>
 
@@ -288,7 +288,7 @@
                 <div class="form__group">
                     <label for="adicionar-telefone" class="form__label">Telefone</label>
                     <input type="tel" id="adicionar-telefone" class="form__input input-phone"
-                        placeholder="12 99999-9999" maxlength="13" required>
+                        placeholder="12 99999-9999" maxlength="15" required>
                 </div>
                 <button type="submit" class="btn btn--success btn--full">Adicionar</button>
 
@@ -304,14 +304,26 @@
             <h2 class="modal__title">Novo Setor</h2>
             <form id="form-novo-setor" class="form">
                 <div class="form__group">
-                    <label for="novo-setor-nome" class="form__label">Nome ou Número do Setor</label>
-                    <input type="text" id="novo-setor-nome" class="form__input input-uppercase"
-                        placeholder="EX: SETOR 05" required>
+                    <label for="novo-setor-numero" class="form__label">Número do Setor (0-100)</label>
+                    <input type="number" id="novo-setor-numero" class="form__input" placeholder="EX: 5" min="0"
+                        max="100" required>
                 </div>
                 <div class="form__group">
-                    <label for="novo-setor-horario" class="form__label">Horário das Visitas</label>
-                    <input type="text" id="novo-setor-horario" class="form__input input-uppercase"
-                        placeholder="EX: SÁBADO, 14H" required>
+                    <label for="novo-setor-dia" class="form__label">Dia da Semana</label>
+                    <select id="novo-setor-dia" class="form__select" required>
+                        <option value="">Selecione...</option>
+                        <option value="SEGUNDA-FEIRA">SEGUNDA-FEIRA</option>
+                        <option value="TERÇA-FEIRA">TERÇA-FEIRA</option>
+                        <option value="QUARTA-FEIRA">QUARTA-FEIRA</option>
+                        <option value="QUINTA-FEIRA">QUINTA-FEIRA</option>
+                        <option value="SEXTA-FEIRA">SEXTA-FEIRA</option>
+                        <option value="SÁBADO">SÁBADO</option>
+                        <option value="DOMINGO">DOMINGO</option>
+                    </select>
+                </div>
+                <div class="form__group">
+                    <label for="novo-setor-horario-fim" class="form__label">Horário das Visitas</label>
+                    <input type="time" id="novo-setor-horario-fim" class="form__input" required>
                 </div>
                 <p class="form__info-text">Responsáveis e enfermos podem ser adicionados após a criação do setor.</p>
                 <button type="submit" class="btn btn--success btn--full">Criar Setor</button>
@@ -389,7 +401,7 @@
                 <div class="form__group">
                     <label for="responsavel-telefone" class="form__label">Celular</label>
                     <input type="tel" id="responsavel-telefone" class="form__input input-phone"
-                        placeholder="12 99999-9999" maxlength="13" required>
+                        placeholder="12 99999-9999" maxlength="15" required>
                 </div>
                 <p id="responsavel-erro" class="form__error hidden">Erro</p>
                 <button type="submit" class="btn btn--success btn--full" id="btn-salvar-responsavel">Adicionar</button>

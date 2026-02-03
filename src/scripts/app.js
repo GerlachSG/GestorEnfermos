@@ -52,7 +52,7 @@ const App = {
         document.getElementById('btn-logout').addEventListener('click', () => this.fazerLogout());
         document.getElementById('btn-pendencias').addEventListener('click', () => this.abrirPendencias());
         document.getElementById('btn-gerenciar-admins').addEventListener('click', () => this.abrirGerenciarAdmins());
-        document.getElementById('btn-novo-setor').addEventListener('click', () => this.abrirModal('modal-novo-setor'));
+        document.getElementById('btn-novo-setor').addEventListener('click', () => this.abrirNovoSetor());
 
         // Fechar modais
         document.querySelectorAll('[data-close-modal]').forEach(el => {
@@ -129,11 +129,9 @@ const App = {
                 let v = e.target.value.replace(/\D/g, '');
                 if (v.length > 11) v = v.substring(0, 11);
 
-                if (v.length > 7) {
-                    v = v.substring(0, 2) + ' ' + v.substring(2, 7) + '-' + v.substring(7, 11);
-                } else if (v.length > 2) {
-                    v = v.substring(0, 2) + ' ' + v.substring(2);
-                }
+                v = v.replace(/^(\d{2})(\d)/g, "$1 $2");
+                v = v.replace(/(\d{5})(\d)/, "$1-$2");
+
                 e.target.value = v;
             });
         });
@@ -161,7 +159,7 @@ const App = {
             if (usuario.isAdmin) {
                 btnPendencias.classList.remove('hidden');
                 btnGerenciarAdmins.classList.remove('hidden');
-                btnNovoSetor.classList.remove('hidden');
+                // btnNovoSetor só deve aparecer após carregar os setores
             } else {
                 btnPendencias.classList.add('hidden');
                 btnGerenciarAdmins.classList.add('hidden');
@@ -219,6 +217,12 @@ const App = {
         } catch (error) {
             container.innerHTML = '<p class="loading">Erro ao carregar setores. Verifique a conexão.</p>';
             console.error(error);
+        } finally {
+            // Mostra o botão de adicionar setor após o carregamento (se for admin)
+            const usuario = Auth.getUsuario();
+            if (usuario && usuario.isAdmin) {
+                document.getElementById('btn-novo-setor').classList.remove('hidden');
+            }
         }
     },
 
@@ -300,8 +304,8 @@ const App = {
                 listaEnfermos.innerHTML = '<li class="loading">Nenhum enfermo cadastrado</li>';
             } else {
                 // SVG icons for edit and remove buttons
-                const iconEdit = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
-                const iconRemove = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+                const iconEdit = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+                const iconRemove = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
                 const iconPending = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
 
                 listaEnfermos.innerHTML = enfermos.map((e, index) => {
@@ -324,8 +328,8 @@ const App = {
                             </div>
                             ${!isPendente ? `
                                 <div class="enfermo-item__actions">
-                                    <button class="btn btn--primary btn--small" data-editar="${e.id}" title="Editar">${iconEdit} Editar</button>
-                                    <button class="btn btn--danger btn--small" data-remover="${e.id}" title="Remover">${iconRemove} Remover</button>
+                                    <button class="btn btn--primary btn--small" data-editar="${e.id}" title="Editar">${iconEdit} EDITAR</button>
+                                    <button class="btn btn--danger btn--small" data-remover="${e.id}" title="Remover">${iconRemove} REMOVER</button>
                                 </div>
                             ` : ''}
                         </li>
@@ -381,10 +385,10 @@ const App = {
                                 <div class="pendencia-item__detalhe">${detalhe}</div>
                                 <div class="pendencia-item__actions">
                                     <button class="btn btn--success btn--small" data-aprovar-modal="${p.setorId}|${p.enfermoId}|${p.status === 'pendente_remocao' ? 'remocao' : p.status === 'pendente_edicao' ? 'edicao' : 'adicao'}">
-                                        ${iconCheck} Aprovar
+                                        ${iconCheck} APROVAR
                                     </button>
                                     <button class="btn btn--danger btn--small" data-rejeitar-modal="${p.setorId}|${p.enfermoId}">
-                                        ${iconX} Rejeitar
+                                        ${iconX} REJEITAR
                                     </button>
                                 </div>
                             </li>
@@ -530,10 +534,10 @@ const App = {
                         <div class="pendencia-item__detalhe">${detalhe}</div>
                         <div class="pendencia-item__actions">
                             <button class="btn btn--success btn--small" data-aprovar="${p.setorId}|${p.enfermoId}|${p.status === 'pendente_remocao' ? 'remocao' : p.status === 'pendente_edicao' ? 'edicao' : 'adicao'}">
-                                ${iconCheck} Aprovar
+                                ${iconCheck} APROVAR
                             </button>
                             <button class="btn btn--danger btn--small" data-rejeitar="${p.setorId}|${p.enfermoId}">
-                                ${iconX} Rejeitar
+                                ${iconX} REJEITAR
                             </button>
                         </div>
                     </li>
@@ -733,6 +737,14 @@ const App = {
     },
 
     /**
+     * Abre modal de novo setor (reseta form)
+     */
+    abrirNovoSetor() {
+        document.getElementById('form-novo-setor').reset();
+        this.abrirModal('modal-novo-setor');
+    },
+
+    /**
      * Handle do formulário de novo setor
      */
     async handleNovoSetor(e) {
@@ -740,8 +752,26 @@ const App = {
 
         if (!Auth.isAdmin()) return;
 
-        const nome = document.getElementById('novo-setor-nome').value.toUpperCase();
-        const horario = document.getElementById('novo-setor-horario').value.toUpperCase();
+        const numero = parseInt(document.getElementById('novo-setor-numero').value);
+
+        // Validação: não permitir setores com o mesmo número
+        const numeroExistente = this.setores.some(s => {
+            const numSetor = parseInt(s.nome.replace('SETOR ', ''));
+            return numSetor === numero;
+        });
+
+        if (numeroExistente) {
+            this.mostrarToast(`Já existe um SETOR ${String(numero).padStart(2, '0')}`, 'error');
+            return;
+        }
+
+        const dia = document.getElementById('novo-setor-dia').value;
+        const hora = document.getElementById('novo-setor-horario-fim').value;
+
+        // Formata horário: "SÁBADO, 14:00"
+        const horario = `${dia}, ${hora}`;
+
+        const nome = `SETOR ${String(numero).padStart(2, '0')}`;
 
         try {
             await DB.addSetor({ nome, horario });
