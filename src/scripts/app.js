@@ -52,6 +52,7 @@ const App = {
         document.getElementById('btn-logout').addEventListener('click', () => this.fazerLogout());
         document.getElementById('btn-pendencias').addEventListener('click', () => this.abrirPendencias());
         document.getElementById('btn-gerenciar-admins').addEventListener('click', () => this.abrirGerenciarAdmins());
+        document.getElementById('btn-novo-setor').addEventListener('click', () => this.abrirModal('modal-novo-setor'));
 
         // Fechar modais
         document.querySelectorAll('[data-close-modal]').forEach(el => {
@@ -95,6 +96,9 @@ const App = {
         // Formulário de remover enfermo
         document.getElementById('form-remover').addEventListener('submit', (e) => this.handleRemoverEnfermo(e));
 
+        // Formulário de novo setor
+        document.getElementById('form-novo-setor').addEventListener('submit', (e) => this.handleNovoSetor(e));
+
         // Botão de adicionar enfermo
         document.getElementById('btn-add-enfermo').addEventListener('click', () => this.abrirAdicionarEnfermo());
 
@@ -123,8 +127,12 @@ const App = {
         document.querySelectorAll('.input-phone').forEach(input => {
             input.addEventListener('input', (e) => {
                 let v = e.target.value.replace(/\D/g, '');
-                if (v.length > 5) {
-                    v = v.substring(0, 5) + '-' + v.substring(5, 9);
+                if (v.length > 11) v = v.substring(0, 11);
+
+                if (v.length > 7) {
+                    v = v.substring(0, 2) + ' ' + v.substring(2, 7) + '-' + v.substring(7, 11);
+                } else if (v.length > 2) {
+                    v = v.substring(0, 2) + ' ' + v.substring(2);
                 }
                 e.target.value = v;
             });
@@ -140,6 +148,7 @@ const App = {
         const btnLogoutText = document.getElementById('btn-logout-text');
         const btnPendencias = document.getElementById('btn-pendencias');
         const btnGerenciarAdmins = document.getElementById('btn-gerenciar-admins');
+        const btnNovoSetor = document.getElementById('btn-novo-setor');
         const btnAdmin = document.getElementById('btn-admin');
 
         if (usuario) {
@@ -152,14 +161,17 @@ const App = {
             if (usuario.isAdmin) {
                 btnPendencias.classList.remove('hidden');
                 btnGerenciarAdmins.classList.remove('hidden');
+                btnNovoSetor.classList.remove('hidden');
             } else {
                 btnPendencias.classList.add('hidden');
                 btnGerenciarAdmins.classList.add('hidden');
+                btnNovoSetor.classList.add('hidden');
             }
         } else {
             btnLogout.classList.add('hidden');
             btnPendencias.classList.add('hidden');
             btnGerenciarAdmins.classList.add('hidden');
+            btnNovoSetor.classList.add('hidden');
             btnAdmin.classList.remove('hidden');
         }
     },
@@ -306,14 +318,14 @@ const App = {
                         <li class="enfermo-item ${isPendente ? 'enfermo-item--pendente' : ''}" style="animation-delay: ${index * 50}ms">
                             <div class="enfermo-item__info">
                                 <div class="enfermo-item__nome">${e.nome}</div>
-                                <div class="enfermo-item__idade">${e.idade} ANOS</div>
+                                <div class="enfermo-item__idade">${e.idade} ANOS - ${e.telefone || 'SEM TELEFONE'}</div>
                                 <div class="enfermo-item__endereco">${e.endereco}</div>
                                 ${statusTexto ? `<div class="enfermo-item__status">${statusTexto}</div>` : ''}
                             </div>
                             ${!isPendente ? `
                                 <div class="enfermo-item__actions">
-                                    <button class="btn btn--primary btn--small" data-editar="${e.id}" title="Editar">${iconEdit}</button>
-                                    <button class="btn btn--danger btn--small" data-remover="${e.id}" title="Remover">${iconRemove}</button>
+                                    <button class="btn btn--primary btn--small" data-editar="${e.id}" title="Editar">${iconEdit} Editar</button>
+                                    <button class="btn btn--danger btn--small" data-remover="${e.id}" title="Remover">${iconRemove} Remover</button>
                                 </div>
                             ` : ''}
                         </li>
@@ -338,6 +350,68 @@ const App = {
                         this.abrirRemoverEnfermo(enfermo);
                     });
                 });
+            }
+
+            // Exibe pendências do setor para Admins
+            const pendenciasContainer = document.getElementById('setor-pendencias-container');
+            const pendenciasLista = document.getElementById('setor-pendencias-lista');
+
+            if (isAdmin) {
+                const pendencias = await DB.getPendenciasSetor(setorId);
+                if (pendencias.length > 0) {
+                    pendenciasContainer.classList.remove('hidden');
+
+                    const iconCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
+                    const iconX = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+
+                    pendenciasLista.innerHTML = pendencias.map((p, index) => {
+                        const tipo = p.status === 'pendente_remocao' ? 'Remoção' : p.status === 'pendente_edicao' ? 'Edição' : 'Inclusão';
+                        const detalhe = p.status === 'pendente_remocao'
+                            ? `Motivo: ${p.motivoPendencia}`
+                            : p.status === 'pendente_edicao'
+                                ? `Novo: ${p.edicaoPendente.nome} - ${p.edicaoPendente.idade} ANOS - ${p.edicaoPendente.telefone || ''} - ${p.edicaoPendente.endereco}`
+                                : `Dados: ${p.nome} - ${p.idade} ANOS - ${p.telefone} - ${p.endereco}`;
+
+                        return `
+                            <li class="pendencia-item" style="animation: slideUp var(--transition-smooth) backwards; animation-delay: ${index * 50}ms">
+                                <div class="pendencia-item__header">
+                                    <span class="pendencia-item__tipo">${tipo}</span>
+                                </div>
+                                <div class="pendencia-item__nome">${p.nome}</div>
+                                <div class="pendencia-item__detalhe">${detalhe}</div>
+                                <div class="pendencia-item__actions">
+                                    <button class="btn btn--success btn--small" data-aprovar-modal="${p.setorId}|${p.enfermoId}|${p.status === 'pendente_remocao' ? 'remocao' : p.status === 'pendente_edicao' ? 'edicao' : 'adicao'}">
+                                        ${iconCheck} Aprovar
+                                    </button>
+                                    <button class="btn btn--danger btn--small" data-rejeitar-modal="${p.setorId}|${p.enfermoId}">
+                                        ${iconX} Rejeitar
+                                    </button>
+                                </div>
+                            </li>
+                        `;
+                    }).join('');
+
+                    // Eventos de aprovar/rejeitar dentro do modal
+                    pendenciasLista.querySelectorAll('[data-aprovar-modal]').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const [sId, eId, tipo] = btn.dataset.aprovarModal.split('|');
+                            await this.aprovarPendencia(sId, eId, tipo);
+                            await this.abrirSetor(setorId); // Recarrega o modal
+                        });
+                    });
+
+                    pendenciasLista.querySelectorAll('[data-rejeitar-modal]').forEach(btn => {
+                        btn.addEventListener('click', async () => {
+                            const [sId, eId] = btn.dataset.rejeitarModal.split('|');
+                            await this.rejeitarPendencia(sId, eId);
+                            await this.abrirSetor(setorId); // Recarrega o modal
+                        });
+                    });
+                } else {
+                    pendenciasContainer.classList.add('hidden');
+                }
+            } else {
+                pendenciasContainer.classList.add('hidden');
             }
 
             // Botão de adicionar (Sempre visível agora)
@@ -384,6 +458,7 @@ const App = {
         document.getElementById('editar-nome').value = enfermo.nome;
         document.getElementById('editar-endereco').value = enfermo.endereco;
         document.getElementById('editar-idade').value = enfermo.idade || '';
+        document.getElementById('editar-telefone').value = enfermo.telefone || '';
 
         this.abrirModal('modal-editar');
     },
@@ -551,6 +626,7 @@ const App = {
         const nome = document.getElementById('adicionar-nome').value.toUpperCase();
         const endereco = document.getElementById('adicionar-endereco').value.toUpperCase();
         const idade = document.getElementById('adicionar-idade').value;
+        const telefone = document.getElementById('adicionar-telefone').value;
 
         const usuario = Auth.getUsuario();
 
@@ -563,12 +639,12 @@ const App = {
         try {
             // Se for admin, adiciona direto
             if (usuario.isAdmin) {
-                await DB.addEnfermo(setorId, { nome, endereco, idade });
+                await DB.addEnfermo(setorId, { nome, endereco, idade, telefone });
                 this.mostrarToast('Enfermo adicionado com sucesso!');
             }
             // Se for o responsável do setor, entra como pendência de adição
             else if (usuario.setorId === setorId) {
-                await DB.solicitarAdicao(setorId, { nome, endereco, idade });
+                await DB.solicitarAdicao(setorId, { nome, endereco, idade, telefone });
                 this.mostrarToast('Inclusão solicitada para aprovação do administrador.');
             }
             // Não é admin nem responsável deste setor
@@ -596,14 +672,15 @@ const App = {
         const nome = document.getElementById('editar-nome').value.toUpperCase();
         const endereco = document.getElementById('editar-endereco').value.toUpperCase();
         const idade = document.getElementById('editar-idade').value;
+        const telefone = document.getElementById('editar-telefone').value;
 
         try {
             // Se for admin, edita diretamente
             if (Auth.isAdmin()) {
-                await DB.editarEnfermoDireto(setorId, enfermoId, { nome, endereco, idade });
+                await DB.editarEnfermoDireto(setorId, enfermoId, { nome, endereco, idade, telefone });
                 this.mostrarToast('Enfermo atualizado com sucesso!');
             } else {
-                await DB.solicitarEdicao(setorId, enfermoId, { nome, endereco, idade });
+                await DB.solicitarEdicao(setorId, enfermoId, { nome, endereco, idade, telefone });
                 this.mostrarToast('Edição solicitada. Aguardando aprovação.');
             }
             await this.fecharModal('modal-editar');
@@ -651,6 +728,29 @@ const App = {
             await this.carregarSetores();
         } catch (error) {
             this.mostrarToast('Erro ao remover enfermo', 'error');
+            console.error(error);
+        }
+    },
+
+    /**
+     * Handle do formulário de novo setor
+     */
+    async handleNovoSetor(e) {
+        e.preventDefault();
+
+        if (!Auth.isAdmin()) return;
+
+        const nome = document.getElementById('novo-setor-nome').value.toUpperCase();
+        const horario = document.getElementById('novo-setor-horario').value.toUpperCase();
+
+        try {
+            await DB.addSetor({ nome, horario });
+            this.mostrarToast('Setor criado com sucesso!');
+
+            await this.fecharModal('modal-novo-setor');
+            await this.carregarSetores();
+        } catch (error) {
+            this.mostrarToast('Erro ao criar setor', 'error');
             console.error(error);
         }
     },

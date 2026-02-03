@@ -727,6 +727,7 @@ input[type="password"],
     display: flex;
     flex-direction: column;
     gap: var(--spacing-xs);
+    min-width: 100px;
 }
 
 /* ----------------------------------------
@@ -1045,4 +1046,75 @@ input[type="password"],
     .main {
         padding: var(--spacing-xl);
     }
+}
+
+/* ----------------------------------------
+   Lista de Pendências (Modal)
+   ---------------------------------------- */
+.lista-pendencias {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.pendencia-item {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    border: 1px solid var(--color-warning-light);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+}
+
+.pendencia-item__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pendencia-item__tipo {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 8px;
+    background: var(--color-warning-light);
+    color: var(--color-warning);
+    border-radius: 4px;
+}
+
+.pendencia-item__setor {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-muted);
+}
+
+.pendencia-item__nome {
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.pendencia-item__detalhe {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-light);
+}
+
+.pendencia-item__actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-xs);
+}
+
+.pendencia--vazia {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: var(--spacing-md);
+    font-style: italic;
+}
+
+.form__info-text {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    font-style: italic;
+    margin-bottom: var(--spacing-xs);
 }

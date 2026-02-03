@@ -98,6 +98,7 @@ const DB = {
                     nome: dados.nome,
                     endereco: dados.endereco,
                     idade: dados.idade,
+                    telefone: dados.telefone,
                     status: 'ativo',
                     dataCriacao: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -151,7 +152,8 @@ const DB = {
                     edicaoPendente: {
                         nome: novosDados.nome,
                         endereco: novosDados.endereco,
-                        idade: novosDados.idade
+                        idade: novosDados.idade,
+                        telefone: novosDados.telefone
                     },
                     dataPendencia: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -176,6 +178,7 @@ const DB = {
                     nome: dados.nome,
                     endereco: dados.endereco,
                     idade: dados.idade,
+                    telefone: dados.telefone,
                     status: 'pendente_adicao',
                     dataPendencia: firebase.firestore.FieldValue.serverTimestamp()
                 });
@@ -247,6 +250,7 @@ const DB = {
                     nome: dados.edicaoPendente.nome,
                     endereco: dados.edicaoPendente.endereco,
                     idade: dados.edicaoPendente.idade,
+                    telefone: dados.edicaoPendente.telefone || dados.telefone || '',
                     status: 'ativo',
                     edicaoPendente: firebase.firestore.FieldValue.delete(),
                     dataPendencia: firebase.firestore.FieldValue.delete()
@@ -382,7 +386,8 @@ const DB = {
                 .update({
                     nome: dados.nome,
                     endereco: dados.endereco,
-                    idade: dados.idade
+                    idade: dados.idade,
+                    telefone: dados.telefone
                 });
         } catch (error) {
             console.error('Erro ao editar enfermo:', error);
@@ -482,6 +487,51 @@ const DB = {
                 });
         } catch (error) {
             console.error('Erro ao editar responsável:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Cria um novo setor
+     * @param {Object} dados - { nome, horario, responsaveis }
+     * @returns {Promise<string>} ID do setor criado
+     */
+    async addSetor(dados) {
+        try {
+            const docRef = await db.collection('setores').add({
+                nome: dados.nome.toUpperCase(),
+                horario: dados.horario.toUpperCase(),
+                responsaveis: dados.responsaveis || []
+            });
+            return docRef.id;
+        } catch (error) {
+            console.error('Erro ao adicionar setor:', error);
+            throw error;
+        }
+    },
+
+    /**
+     * Busca pendências de um setor específico
+     * @param {string} setorId - ID do setor
+     * @returns {Promise<Array>}
+     */
+    async getPendenciasSetor(setorId) {
+        try {
+            const snapshot = await db
+                .collection('setores')
+                .doc(setorId)
+                .collection('enfermos')
+                .where('status', 'in', ['pendente_remocao', 'pendente_edicao', 'pendente_adicao'])
+                .get();
+
+            return snapshot.docs.map(doc => ({
+                id: doc.id,
+                enfermoId: doc.id,
+                ...doc.data(),
+                setorId: setorId
+            }));
+        } catch (error) {
+            console.error('Erro ao buscar pendências do setor:', error);
             throw error;
         }
     }

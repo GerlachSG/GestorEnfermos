@@ -70,6 +70,17 @@
         <section class="setores" id="lista-setores">
             <p class="loading">Carregando setores...</p>
         </section>
+        <div class="main__actions" style="margin-top: var(--spacing-lg); display: flex; justify-content: center;">
+            <button id="btn-novo-setor" class="btn btn--success hidden">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="12" y1="8" x2="12" y2="16"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+                ADICIONAR NOVO SETOR
+            </button>
+        </div>
     </main>
 
     <!-- Modal: Detalhes do Setor -->
@@ -97,8 +108,13 @@
                     <ul class="lista-enfermos" id="setor-enfermos"></ul>
 
                     <div class="modal__actions--center">
-                        <button id="btn-add-enfermo" class="btn btn--success">+ Adicionar Enfermo</button>
+                        <button id="btn-add-enfermo" class="btn btn--success">+ ADICIONAR ENFERMO</button>
                     </div>
+                </div>
+
+                <div class="modal__section modal__section-card hidden" id="setor-pendencias-container">
+                    <h3 class="modal__section-title">Pendências no Setor</h3>
+                    <ul class="lista-pendencias" id="setor-pendencias-lista"></ul>
                 </div>
 
             </div>
@@ -120,8 +136,8 @@
                 </div>
                 <div class="form__group">
                     <label for="login-telefone" class="form__label">Seu celular</label>
-                    <input type="tel" id="login-telefone" class="form__input input-phone" placeholder="99999-9999"
-                        maxlength="10" required>
+                    <input type="tel" id="login-telefone" class="form__input input-phone" placeholder="12 99999-9999"
+                        maxlength="13" required>
                 </div>
                 <p id="login-erro" class="form__error hidden">Nome ou telefone incorretos</p>
                 <button type="submit" class="btn btn--success btn--full">Confirmar</button>
@@ -201,7 +217,13 @@
                     <label for="editar-idade" class="form__label">Idade</label>
                     <input type="number" id="editar-idade" class="form__input" required>
                 </div>
+                <div class="form__group">
+                    <label for="editar-telefone" class="form__label">Telefone</label>
+                    <input type="tel" id="editar-telefone" class="form__input input-phone" placeholder="12 99999-9999"
+                        maxlength="13" required>
+                </div>
                 <button type="submit" class="btn btn--primary btn--full">Solicitar Alteração</button>
+
             </form>
         </div>
     </div>
@@ -263,7 +285,36 @@
                     <label for="adicionar-idade" class="form__label">Idade</label>
                     <input type="number" id="adicionar-idade" class="form__input" required>
                 </div>
+                <div class="form__group">
+                    <label for="adicionar-telefone" class="form__label">Telefone</label>
+                    <input type="tel" id="adicionar-telefone" class="form__input input-phone"
+                        placeholder="12 99999-9999" maxlength="13" required>
+                </div>
                 <button type="submit" class="btn btn--success btn--full">Adicionar</button>
+
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Novo Setor (Admin) -->
+    <div class="modal" id="modal-novo-setor">
+        <div class="modal__overlay" data-close-modal></div>
+        <div class="modal__content modal__content--small">
+            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
+            <h2 class="modal__title">Novo Setor</h2>
+            <form id="form-novo-setor" class="form">
+                <div class="form__group">
+                    <label for="novo-setor-nome" class="form__label">Nome ou Número do Setor</label>
+                    <input type="text" id="novo-setor-nome" class="form__input input-uppercase"
+                        placeholder="EX: SETOR 05" required>
+                </div>
+                <div class="form__group">
+                    <label for="novo-setor-horario" class="form__label">Horário das Visitas</label>
+                    <input type="text" id="novo-setor-horario" class="form__input input-uppercase"
+                        placeholder="EX: SÁBADO, 14H" required>
+                </div>
+                <p class="form__info-text">Responsáveis e enfermos podem ser adicionados após a criação do setor.</p>
+                <button type="submit" class="btn btn--success btn--full">Criar Setor</button>
             </form>
         </div>
     </div>
@@ -337,8 +388,8 @@
                 </div>
                 <div class="form__group">
                     <label for="responsavel-telefone" class="form__label">Celular</label>
-                    <input type="tel" id="responsavel-telefone" class="form__input input-phone" placeholder="99999-9999"
-                        maxlength="10" required>
+                    <input type="tel" id="responsavel-telefone" class="form__input input-phone"
+                        placeholder="12 99999-9999" maxlength="13" required>
                 </div>
                 <p id="responsavel-erro" class="form__error hidden">Erro</p>
                 <button type="submit" class="btn btn--success btn--full" id="btn-salvar-responsavel">Adicionar</button>
