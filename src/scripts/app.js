@@ -197,7 +197,7 @@ const App = {
                     <p class="setor-card__horario">${setor.horario}</p>
                     <div class="setor-card__info">
                         <span>${setor.totalEnfermos} enfermo${setor.totalEnfermos !== 1 ? 's' : ''}</span>
-                        ${setor.pendencias > 0 ? `
+                        ${(Auth.isAdmin() && setor.pendencias > 0) ? `
                             <span class="setor-card__badge">
                                 ${iconPendingBadge}${setor.pendencias} pendência${setor.pendencias !== 1 ? 's' : ''}
                             </span>
@@ -300,7 +300,9 @@ const App = {
             const usuario = Auth.getUsuario();
             const podeEditar = usuario && (usuario.isAdmin || usuario.setorId === setorId);
 
-            if (enfermos.length === 0) {
+            const enfermosVisiveis = isAdmin ? enfermos : enfermos.filter(e => e.status === 'ativo');
+
+            if (enfermosVisiveis.length === 0) {
                 listaEnfermos.innerHTML = '<li class="loading">Nenhum enfermo cadastrado</li>';
             } else {
                 // SVG icons for edit and remove buttons
@@ -308,7 +310,7 @@ const App = {
                 const iconRemove = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
                 const iconPending = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
 
-                listaEnfermos.innerHTML = enfermos.map((e, index) => {
+                listaEnfermos.innerHTML = enfermosVisiveis.map((e, index) => {
                     const isPendente = e.status !== 'ativo';
                     const statusTexto = e.status === 'pendente_remocao'
                         ? `${iconPending}Remoção pendente: ${e.motivoPendencia}`
@@ -318,12 +320,16 @@ const App = {
                                 ? `${iconPending}Inclusão pendente`
                                 : '';
 
+                    const nomeExibicao = isAdmin ? e.nome : formatarNomeExibicao(e.nome);
+                    const telefoneHtml = isAdmin ? ` - ${e.telefone || 'SEM TELEFONE'}` : '';
+                    const enderecoHtml = isAdmin ? `<div class="enfermo-item__endereco">${e.endereco}</div>` : '';
+
                     return `
                         <li class="enfermo-item ${isPendente ? 'enfermo-item--pendente' : ''}" style="animation-delay: ${index * 50}ms">
                             <div class="enfermo-item__info">
-                                <div class="enfermo-item__nome">${e.nome}</div>
-                                <div class="enfermo-item__idade">${e.idade} ANOS - ${e.telefone || 'SEM TELEFONE'}</div>
-                                <div class="enfermo-item__endereco">${e.endereco}</div>
+                                <div class="enfermo-item__nome">${nomeExibicao}</div>
+                                <div class="enfermo-item__idade">${e.idade} ANOS${telefoneHtml}</div>
+                                ${enderecoHtml}
                                 ${statusTexto ? `<div class="enfermo-item__status">${statusTexto}</div>` : ''}
                             </div>
                             ${!isPendente ? `
@@ -457,6 +463,11 @@ const App = {
             return;
         }
 
+        if (!usuario.isAdmin && usuario.setorId !== this.setorAtual) {
+            this.mostrarToast('Você não tem permissão neste setor', 'error');
+            return;
+        }
+
         document.getElementById('editar-id').value = enfermo.id;
         document.getElementById('editar-setor-id').value = this.setorAtual;
         document.getElementById('editar-nome').value = enfermo.nome;
@@ -475,6 +486,11 @@ const App = {
 
         if (!usuario) {
             this.abrirModal('modal-login');
+            return;
+        }
+
+        if (!usuario.isAdmin && usuario.setorId !== this.setorAtual) {
+            this.mostrarToast('Você não tem permissão neste setor', 'error');
             return;
         }
 

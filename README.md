@@ -1,4 +1,4 @@
-# <img src="https://raw.githubusercontent.com/GerlachSG/GestorEnfermos/refs/heads/main/src/img/Pastoral-da-Saude-FavIcon.png" width="40" valign="middle"> SISTEMA GESTOR DE ENFERMOS
+# <img src="https://raw.githubusercontent.com/GerlachSG/GestorEnfermos/refs/heads/main/src/img/Pastoral-da-Saude-FavIcon.png" width="40" valign="middle"> VISITA AMIGA
 
 > Solução digital desenvolvida para a **Pastoral da Saúde da Paróquia São Bento** em São José dos Campos - SP.
 
@@ -6,11 +6,19 @@
 
 ---
 
-## 📖 O QUE É?
+## 📖 O QUE É E QUAL O PROBLEMA QUE RESOLVE?
 
-O **Gestor de Enfermos** é uma aplicação web mobile-first que moderniza a organização das visitas da Pastoral da Saúde. O sistema centraliza informações sobre setores, horários e enfermos, garantindo que nenhum irmão seja esquecido no cuidado pastoral.
+O cuidado pastoral da saúde lida com um fluxo intenso e muito dinâmico. Semanalmente, novos enfermos entram para receber assistência (visitas, comunhão e missas), enquanto outros deixam de precisar (alta/recuperação, mudança de endereço ou falecimento). Tradicionalmente, esse registro era feito em anotações de papel ("papelzinho"), que se tornavam desatualizadas no curto percurso entre a visita e a igreja. 
 
-Esta solução nasceu no coração da **Paróquia São Bento**, mas foi planejada para ser escalada e adaptada por qualquer comunidade que deseje organizar melhor seus setores e voluntários.
+O **Gestor de Enfermos** é uma aplicação web mobile-first criada para resolver esse problema logístico. Ele moderniza e centraliza a organização das visitas da Pastoral da Saúde, garantindo que nenhum irmão seja esquecido.
+
+### 🌟 O QUE O PROJETO PROPORCIONA
+- **Controle Dinâmico e em Tempo Real:** Fim da desatualização do papel; dados acessíveis e atualizados na nuvem por qualquer voluntário autorizado.
+- **Transparência e Mapeamento:** Qualquer pessoa da equipe pode, com um clique, saber quantos enfermos estão ativos em cada setor/lugar.
+- **Histórico e Responsáveis:** Registro claro de quem atende qual assistido e de quem já parou de ser atendido.
+- **Agilidade para o Grupo:** Facilita a comunicação da equipe em meio ao grande fluxo semanal de entradas e saídas de enfermos.
+
+Esta solução nasceu de uma dor real no dia a dia da **Paróquia São Bento**, desenhada para ser inclusiva e facilmente escalada para qualquer comunidade que deseje organizar melhor seus setores e voluntários.
 
 ### 🎯 DESIGN INCLUSIVO
 
