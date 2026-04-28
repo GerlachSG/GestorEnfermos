@@ -14,11 +14,13 @@ const App = {
         if (Auth.getUsuario()) {
             this.afterLogin();
         } else {
-            this.showView('login');
+            this.showView('home');
         }
     },
 
     bindEvents() {
+        document.getElementById('btn-access-system').addEventListener('click', () => this.showView('login'));
+        document.getElementById('btn-learn-more').addEventListener('click', () => this.openAboutModal());
         document.getElementById('form-login').addEventListener('submit', event => this.handleLogin(event));
         document.getElementById('login-nome').addEventListener('input', event => {
             event.target.value = DB.normalizeText(event.target.value);
@@ -42,6 +44,9 @@ const App = {
 
         document.querySelectorAll('[data-close-modal]').forEach(element => {
             element.addEventListener('click', () => this.closeModal());
+        });
+        document.querySelectorAll('[data-close-about]').forEach(element => {
+            element.addEventListener('click', () => this.closeAboutModal());
         });
     },
 
@@ -122,16 +127,25 @@ const App = {
         document.getElementById('form-login').reset();
         this.resetCoordinatorStep();
         this.refreshTopbar();
-        this.showView('login');
+        this.showView('home');
         this.showToast('VOCÊ SAIU DO SISTEMA.', 'warning');
     },
 
     showView(view) {
-        ['login', 'localidades', 'matriz', 'setor', 'dashboard'].forEach(name => {
+        ['home', 'login', 'localidades', 'matriz', 'setor', 'dashboard'].forEach(name => {
             document.getElementById(`view-${name}`).classList.toggle('hidden', name !== view);
         });
+        document.getElementById('topbar').classList.toggle('hidden', view === 'home');
         this.currentView = view;
         window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    openAboutModal() {
+        document.getElementById('about-modal').classList.remove('hidden');
+    },
+
+    closeAboutModal() {
+        document.getElementById('about-modal').classList.add('hidden');
     },
 
     renderLocalidades() {

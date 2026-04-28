@@ -144,6 +144,96 @@ textarea:focus-visible {
     width: 100%;
 }
 
+.home-screen {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 24px 18px;
+    background: radial-gradient(circle at 50% 35%, #ffffff 0%, #fbfaf4 54%, #f3f1e9 100%);
+}
+
+.home-panel {
+    width: min(100%, 390px);
+    min-height: min(760px, calc(100vh - 48px));
+    display: grid;
+    align-content: center;
+    gap: 28px;
+}
+
+.home-brand {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+}
+
+.home-brand__logo {
+    width: 76px;
+    height: 76px;
+    object-fit: contain;
+}
+
+.home-brand h1 {
+    font-size: 1.42rem;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.home-brand p {
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.home-illustration {
+    width: min(100%, 330px);
+    margin: 0 auto;
+    display: block;
+    object-fit: contain;
+    filter: drop-shadow(0 18px 30px rgba(47, 111, 94, 0.10));
+}
+
+.home-actions {
+    display: grid;
+    gap: 14px;
+    width: min(100%, 310px);
+    margin: 0 auto;
+}
+
+.home-action {
+    width: 100%;
+    min-height: 64px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 1rem;
+}
+
+.home-action svg {
+    width: 27px;
+    height: 27px;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 2.4;
+}
+
+.about-panel {
+    display: grid;
+    gap: 14px;
+}
+
+.about-panel p {
+    color: var(--muted);
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
 .login-screen {
     min-height: calc(100vh - 80px);
     display: grid;
@@ -744,6 +834,28 @@ textarea:focus-visible {
 
     .login-screen {
         padding: 12px;
+    }
+
+    .home-screen {
+        padding: 18px 16px;
+    }
+
+    .home-panel {
+        min-height: calc(100vh - 36px);
+        gap: 24px;
+    }
+
+    .home-brand__logo {
+        width: 68px;
+        height: 68px;
+    }
+
+    .home-brand h1 {
+        font-size: 1.28rem;
+    }
+
+    .home-illustration {
+        width: min(100%, 318px);
     }
 
     .location-card h2 {

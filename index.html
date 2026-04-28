@@ -36,6 +36,28 @@
     </header>
 
     <main class="app" id="app">
+        <section class="home-screen" id="view-home" aria-labelledby="home-title">
+            <div class="home-panel">
+                <div class="home-brand">
+                    <img class="home-brand__logo" src="src/img/Pastoral-da-Saude-FavIcon.png" alt="PASTORAL DA SAÚDE">
+                    <div>
+                        <h1 id="home-title">VISITA AMIGA</h1>
+                        <p>PASTORAL DA SAÚDE</p>
+                    </div>
+                </div>
+
+                <img class="home-illustration" src="src/img/ImgHome.png" alt="AGENTE DA PASTORAL ACOLHENDO UMA IDOSA">
+
+                <div class="home-actions">
+                    <button class="primary-action home-action" id="btn-access-system" type="button">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                        ACESSAR SISTEMA
+                    </button>
+                    <button class="secondary-action home-action" id="btn-learn-more" type="button">SAIBA MAIS</button>
+                </div>
+            </div>
+        </section>
+
         <section class="login-screen" id="view-login" aria-labelledby="login-title">
             <div class="login-panel">
                 <img class="login-panel__logo" src="src/img/Pastoral-da-Saude-FavIcon.png" alt="PASTORAL DA SAÚDE">
@@ -159,6 +181,18 @@
             <button class="modal__close" type="button" data-close-modal aria-label="FECHAR">×</button>
             <h2 id="entity-modal-title">CADASTRO</h2>
             <form class="form" id="entity-form"></form>
+        </div>
+    </div>
+
+    <div class="modal hidden" id="about-modal" role="dialog" aria-modal="true" aria-labelledby="about-modal-title">
+        <div class="modal__overlay" data-close-about></div>
+        <div class="modal__panel about-panel">
+            <button class="modal__close" type="button" data-close-about aria-label="FECHAR">×</button>
+            <h2 id="about-modal-title">SOBRE O VISITA AMIGA</h2>
+            <p>O VISITA AMIGA É UMA FERRAMENTA CRIADA PARA APOIAR A PASTORAL DA SAÚDE NA ORGANIZAÇÃO DOS SETORES, RESPONSÁVEIS, AGENTES E ENFERMOS ACOMPANHADOS.</p>
+            <p>O OBJETIVO É FACILITAR O CUIDADO, EVITAR INFORMAÇÕES PERDIDAS EM PAPEL E AJUDAR A COORDENAÇÃO A ACOMPANHAR O TRABALHO DA EQUIPE COM MAIS CLAREZA.</p>
+            <p>O SISTEMA FOI PENSADO PARA USO SIMPLES NO CELULAR, COM BOTÕES GRANDES, TEXTOS CLAROS E ACESSO ORGANIZADO POR FUNÇÃO.</p>
+            <button class="primary-action" type="button" data-close-about>ENTENDI</button>
         </div>
     </div>
 
