@@ -1,1178 +1,526 @@
-/**
- * Lógica Principal da Aplicação
- * Gerencia modais, renderização e interações
- */
-
-/**
- * Formata nome abreviando sobrenomes do meio
- * Ex: "PEDRO GONÇALVES CARRILO" → "PEDRO G. CARRILO"
- * @param {string} nomeCompleto - Nome completo
- * @returns {string} Nome formatado
- */
-function formatarNomeExibicao(responsavel) {
-    if (!responsavel) return '';
-
-    // Se for objeto, usa a propriedade nome
-    const nomeCompleto = typeof responsavel === 'object' ? responsavel.nome : responsavel;
-
-    const partes = nomeCompleto.trim().split(/\s+/);
-
-    if (partes.length <= 2) {
-        return partes.join(' ');
-    }
-
-    const primeiro = partes[0];
-    const ultimo = partes[partes.length - 1];
-    const meios = partes.slice(1, -1).map(nome => nome.charAt(0).toUpperCase() + '.');
-
-    return [primeiro, ...meios, ultimo].join(' ');
-}
-
-// Estado da aplicação
 const App = {
-    setorAtual: null,
-    setores: [],
-    modalStack: [],
+    currentView: 'login',
+    currentSetorId: null,
+    lastSetorSource: 'localidades',
+    pendingCoordinator: null,
+    toastTimer: null,
 
-    /**
-     * Inicializa a aplicação
-     */
     async init() {
+        await DB.init();
         this.bindEvents();
-        this.atualizarUI();
-        await this.carregarSetores();
-    },
+        this.populateAutocomplete();
+        this.refreshTopbar();
 
-    /**
-     * Vincula eventos aos elementos
-     */
-    bindEvents() {
-        // Botões do header
-        document.getElementById('btn-admin').addEventListener('click', () => this.abrirModal('modal-login-admin'));
-        document.getElementById('btn-logout').addEventListener('click', () => this.fazerLogout());
-        document.getElementById('btn-pendencias').addEventListener('click', () => this.abrirPendencias());
-        document.getElementById('btn-gerenciar-admins').addEventListener('click', () => this.abrirGerenciarAdmins());
-        document.getElementById('btn-novo-setor').addEventListener('click', () => this.abrirNovoSetor());
-
-        // Fechar modais
-        document.querySelectorAll('[data-close-modal]').forEach(el => {
-            el.addEventListener('click', async () => await this.fecharUltimoModal());
-        });
-
-        // Formulário de Remover Responsável
-        const formRemoverResp = document.getElementById('form-remover-responsavel');
-        if (formRemoverResp) {
-            formRemoverResp.addEventListener('submit', (e) => this.handleRemoverResponsavel(e));
-        }
-
-        // Fechar modais voltando para o setor
-        document.querySelectorAll('[data-close-to-setor]').forEach(el => {
-            el.addEventListener('click', async () => await this.fecharModalVoltarSetor());
-        });
-
-        // ESC para fechar modais
-        document.addEventListener('keydown', async (e) => {
-            if (e.key === 'Escape') await this.fecharUltimoModal();
-        });
-
-        // Formulário de login responsável
-        document.getElementById('form-login').addEventListener('submit', (e) => this.handleLogin(e));
-
-        // Formulário de login admin
-        document.getElementById('form-login-admin').addEventListener('submit', (e) => this.handleLoginAdmin(e));
-
-        // Botão de login com Google
-        document.getElementById('btn-google-login').addEventListener('click', () => this.handleGoogleLogin());
-
-        // Formulário de adicionar admin
-        document.getElementById('form-add-admin').addEventListener('submit', (e) => this.handleAdicionarAdmin(e));
-
-        // Formulário de adicionar enfermo
-        document.getElementById('form-adicionar').addEventListener('submit', (e) => this.handleAdicionarEnfermo(e));
-
-        // Formulário de editar enfermo
-        document.getElementById('form-editar').addEventListener('submit', (e) => this.handleEditarEnfermo(e));
-
-        // Formulário de remover enfermo
-        document.getElementById('form-remover').addEventListener('submit', (e) => this.handleRemoverEnfermo(e));
-
-        // Formulário de novo setor
-        document.getElementById('form-novo-setor').addEventListener('submit', (e) => this.handleNovoSetor(e));
-
-        // Botão de adicionar enfermo
-        document.getElementById('btn-add-enfermo').addEventListener('click', () => this.abrirAdicionarEnfermo());
-
-        // Motivo de remoção - mostrar campo para "Outro"
-        document.getElementById('remover-motivo').addEventListener('change', (e) => {
-            const outroContainer = document.getElementById('remover-outro-container');
-            const erroEl = document.getElementById('remover-erro');
-            if (e.target.value === 'Outro') {
-                outroContainer.classList.remove('hidden');
-            } else {
-                outroContainer.classList.add('hidden');
-                erroEl.classList.add('hidden');
-            }
-        });
-
-        // Formulário de responsável
-        document.getElementById('form-responsavel').addEventListener('submit', (e) => this.handleSalvarResponsavel(e));
-
-        // Input Mask e Uppercase
-        document.querySelectorAll('.input-uppercase').forEach(input => {
-            input.addEventListener('input', (e) => {
-                e.target.value = e.target.value.toUpperCase();
-            });
-        });
-
-        document.querySelectorAll('.input-phone').forEach(input => {
-            input.addEventListener('input', (e) => {
-                let v = e.target.value.replace(/\D/g, '');
-                if (v.length > 11) v = v.substring(0, 11);
-
-                v = v.replace(/^(\d{2})(\d)/g, "$1 $2");
-                v = v.replace(/(\d{5})(\d)/, "$1-$2");
-
-                e.target.value = v;
-            });
-        });
-    },
-
-    /**
-     * Atualiza a interface baseado no estado de login
-     */
-    atualizarUI() {
-        const usuario = Auth.getUsuario();
-        const btnLogout = document.getElementById('btn-logout');
-        const btnLogoutText = document.getElementById('btn-logout-text');
-        const btnPendencias = document.getElementById('btn-pendencias');
-        const btnGerenciarAdmins = document.getElementById('btn-gerenciar-admins');
-        const btnNovoSetor = document.getElementById('btn-novo-setor');
-        const btnAdmin = document.getElementById('btn-admin');
-
-        if (usuario) {
-            btnLogout.classList.remove('hidden');
-            btnLogoutText.textContent = `Sair (${usuario.nome.split(' ')[0]})`;
-
-            // Esconde botão de admin quando logado
-            btnAdmin.classList.add('hidden');
-
-            if (usuario.isAdmin) {
-                btnPendencias.classList.remove('hidden');
-                btnGerenciarAdmins.classList.remove('hidden');
-                // btnNovoSetor só deve aparecer após carregar os setores
-            } else {
-                btnPendencias.classList.add('hidden');
-                btnGerenciarAdmins.classList.add('hidden');
-                btnNovoSetor.classList.add('hidden');
-            }
+        if (Auth.getUsuario()) {
+            this.afterLogin();
         } else {
-            btnLogout.classList.add('hidden');
-            btnPendencias.classList.add('hidden');
-            btnGerenciarAdmins.classList.add('hidden');
-            btnNovoSetor.classList.add('hidden');
-            btnAdmin.classList.remove('hidden');
+            this.showView('login');
         }
     },
 
-    /**
-     * Carrega e renderiza os setores
-     */
-    async carregarSetores() {
-        const container = document.getElementById('lista-setores');
+    bindEvents() {
+        document.getElementById('form-login').addEventListener('submit', event => this.handleLogin(event));
+        document.getElementById('login-nome').addEventListener('input', event => {
+            event.target.value = DB.normalizeText(event.target.value);
+            this.resetCoordinatorStep();
+            this.updateNameSuggestions(event.target.value);
+        });
+        document.getElementById('login-telefone').addEventListener('input', event => {
+            event.target.value = this.formatPhone(event.target.value);
+            this.resetCoordinatorStep();
+        });
+
+        document.getElementById('btn-home').addEventListener('click', () => this.renderLocalidades());
+        document.getElementById('btn-logout').addEventListener('click', () => this.logout());
+        document.getElementById('btn-dashboard').addEventListener('click', () => this.renderDashboard());
+        document.getElementById('btn-voltar-localidades').addEventListener('click', () => this.renderLocalidades());
+        document.getElementById('btn-voltar-setores').addEventListener('click', () => this.backFromSetor());
+        document.getElementById('btn-dashboard-voltar').addEventListener('click', () => this.renderLocalidades());
+        document.getElementById('dashboard-filter').addEventListener('change', () => this.renderDashboard());
+        document.getElementById('btn-novo-usuario').addEventListener('click', () => this.openUserModal());
+        document.getElementById('toast-close').addEventListener('click', () => this.hideToast());
+
+        document.querySelectorAll('[data-close-modal]').forEach(element => {
+            element.addEventListener('click', () => this.closeModal());
+        });
+    },
+
+    populateAutocomplete() {
+        this.updateNameSuggestions('');
+    },
+
+    updateNameSuggestions(query) {
+        const list = document.getElementById('usuarios-lista');
+        const normalizedQuery = DB.normalizeText(query);
+
+        if (normalizedQuery.length < 2) {
+            list.innerHTML = '';
+            return;
+        }
+
+        const suggestions = DB.getUsuarios()
+            .filter(user => user.nome.includes(normalizedQuery))
+            .slice(0, 6);
+
+        list.innerHTML = suggestions.map(user => `<option value="${this.escape(user.nome)}"></option>`).join('');
+    },
+
+    refreshTopbar() {
+        const user = Auth.getUsuario();
+        document.getElementById('current-user-label').textContent = user
+            ? `${user.nome} - ${this.roleLabel(user.role)}`
+            : 'ACESSO NÃO IDENTIFICADO';
+        document.getElementById('btn-home').classList.toggle('hidden', !user);
+        document.getElementById('btn-logout').classList.toggle('hidden', !user);
+        document.getElementById('btn-dashboard').classList.toggle('hidden', !user || user.role !== 'coordenador');
+    },
+
+    handleLogin(event) {
+        event.preventDefault();
+        const nome = document.getElementById('login-nome').value;
+        const telefone = document.getElementById('login-telefone').value;
+        const senha = document.getElementById('login-senha').value;
+        const error = document.getElementById('login-error');
+        error.classList.add('hidden');
 
         try {
-            this.setores = await DB.getSetores();
-
-            if (this.setores.length === 0) {
-                container.innerHTML = '<p class="loading">Nenhum setor cadastrado</p>';
+            const identified = this.pendingCoordinator || Auth.identify(nome, telefone);
+            if (identified.role === 'coordenador' && !this.pendingCoordinator) {
+                this.pendingCoordinator = identified;
+                document.getElementById('password-field').classList.remove('hidden');
+                document.getElementById('login-senha').setAttribute('required', 'required');
+                document.getElementById('login-senha').focus();
+                this.showToast('COORDENADOR CONFIRMADO. DIGITE A SENHA.', 'info');
                 return;
             }
 
-            // SVG icon for pending badge
-            const iconPendingBadge = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+            Auth.login(nome, telefone, senha);
+            this.pendingCoordinator = null;
+            this.afterLogin();
+            this.showToast('ACESSO CONFIRMADO.', 'success');
+        } catch (loginError) {
+            error.textContent = loginError.message;
+            error.classList.remove('hidden');
+            this.showToast(loginError.message, 'error');
+        }
+    },
 
-            container.innerHTML = this.setores.map((setor, index) => `
-                <article class="setor-card" data-setor-id="${setor.id}" style="animation-delay: ${index * 50}ms">
-                    <h2 class="setor-card__nome">${setor.nome}</h2>
-                    <p class="setor-card__horario">${setor.horario}</p>
-                    <div class="setor-card__info">
-                        <span>${setor.totalEnfermos} enfermo${setor.totalEnfermos !== 1 ? 's' : ''}</span>
-                        ${(Auth.isAdmin() && setor.pendencias > 0) ? `
-                            <span class="setor-card__badge">
-                                ${iconPendingBadge}${setor.pendencias} pendência${setor.pendencias !== 1 ? 's' : ''}
-                            </span>
-                        ` : ''}
+    resetCoordinatorStep() {
+        this.pendingCoordinator = null;
+        document.getElementById('password-field').classList.add('hidden');
+        document.getElementById('login-senha').removeAttribute('required');
+        document.getElementById('login-senha').value = '';
+    },
+
+    afterLogin() {
+        this.refreshTopbar();
+        this.renderLocalidades();
+    },
+
+    logout() {
+        Auth.logout();
+        document.getElementById('form-login').reset();
+        this.resetCoordinatorStep();
+        this.refreshTopbar();
+        this.showView('login');
+        this.showToast('VOCÊ SAIU DO SISTEMA.', 'warning');
+    },
+
+    showView(view) {
+        ['login', 'localidades', 'matriz', 'setor', 'dashboard'].forEach(name => {
+            document.getElementById(`view-${name}`).classList.toggle('hidden', name !== view);
+        });
+        this.currentView = view;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    },
+
+    renderLocalidades() {
+        this.populateAutocomplete();
+        const grid = document.getElementById('localidades-grid');
+        grid.innerHTML = DB.getLocalidades().map(localidade => `
+            <button class="location-card" type="button" data-localidade="${localidade.id}">
+                <img src="${localidade.imagem}" alt="${this.escape(localidade.nome)}" loading="lazy" onerror="this.style.display='none';this.parentElement.classList.add('location-card--no-image')">
+                <span class="location-card__body">
+                    <span class="location-card__fallback" aria-hidden="true">IMAGEM INDISPONÍVEL</span>
+                    <h2>${this.escape(localidade.nome)}</h2>
+                    <p>${this.escape(localidade.endereco)}</p>
+                </span>
+            </button>
+        `).join('');
+
+        grid.querySelectorAll('[data-localidade]').forEach(button => {
+            button.addEventListener('click', () => this.openLocalidade(button.dataset.localidade));
+        });
+
+        this.showView('localidades');
+    },
+
+    openLocalidade(localidadeId) {
+        const localidade = DB.getLocalidades().find(item => item.id === localidadeId);
+        if (localidade.matriz) {
+            this.renderMatriz();
+            return;
+        }
+
+        const setor = DB.getSetores().find(item => item.localidadeId === localidadeId);
+        this.lastSetorSource = 'localidades';
+        this.renderSetor(setor.id);
+    },
+
+    renderMatriz() {
+        const grid = document.getElementById('matriz-setores-grid');
+        const setores = DB.getSetores().filter(setor => setor.localidadeId === 'matriz-sao-bento');
+        grid.innerHTML = setores.map(setor => `
+            <button class="sector-card" type="button" data-setor="${setor.id}">
+                <h2>${this.escape(setor.nome)}</h2>
+            </button>
+        `).join('');
+
+        grid.querySelectorAll('[data-setor]').forEach(button => {
+            button.addEventListener('click', () => {
+                this.lastSetorSource = 'matriz';
+                this.renderSetor(button.dataset.setor);
+            });
+        });
+
+        this.showView('matriz');
+    },
+
+    renderSetor(setorId) {
+        const setor = DB.getSetor(setorId);
+        const localidade = DB.getLocalidades().find(item => item.id === setor.localidadeId);
+        const user = Auth.getUsuario();
+        this.currentSetorId = setorId;
+
+        document.getElementById('setor-localidade').textContent = localidade.nome;
+        document.getElementById('setor-title').textContent = setor.nome;
+
+        this.renderNameList('setor-responsaveis', DB.getSectorUsers(setorId, 'responsavel'));
+        this.renderNameList('setor-agentes', DB.getSectorUsers(setorId, 'agente'));
+        this.renderEnfermos(setor, user);
+        this.renderSetorActions(setor, user);
+        this.showView('setor');
+    },
+
+    renderNameList(elementId, users) {
+        document.getElementById(elementId).innerHTML = users.length
+            ? users.map(user => `<li>${this.escape(user.nome)}</li>`).join('')
+            : '<li>NENHUM CADASTRADO</li>';
+    },
+
+    renderEnfermos(setor, user) {
+        const canEdit = DB.can(user, 'edit-enfermo', setor.id);
+        const list = document.getElementById('setor-enfermos');
+        if (!setor.enfermos.length) {
+            list.innerHTML = '<li>NENHUM ENFERMO CADASTRADO</li>';
+            return;
+        }
+
+        list.innerHTML = setor.enfermos
+            .sort((a, b) => a.nome.localeCompare(b.nome))
+            .map(enfermo => `
+                <li>
+                    <div>
+                        <strong>${this.escape(enfermo.nome)}</strong>
+                        <div class="people-list__meta">IDADE: ${this.escape(enfermo.idade || 'NÃO INFORMADA')}</div>
                     </div>
-                </article>
+                    ${canEdit ? `
+                        <div class="row-actions">
+                            <button class="secondary-action" type="button" data-edit-enfermo="${enfermo.id}">EDITAR</button>
+                            <button class="danger-action" type="button" data-remove-enfermo="${enfermo.id}">REMOVER</button>
+                        </div>
+                    ` : ''}
+                </li>
             `).join('');
 
-            // Adiciona eventos de clique nos cards
-            container.querySelectorAll('.setor-card').forEach(card => {
-                card.addEventListener('click', () => {
-                    const setorId = card.dataset.setorId;
-                    this.abrirSetor(setorId);
-                });
+        list.querySelectorAll('[data-edit-enfermo]').forEach(button => {
+            button.addEventListener('click', () => this.openEnfermoModal(setor.id, button.dataset.editEnfermo));
+        });
+        list.querySelectorAll('[data-remove-enfermo]').forEach(button => {
+            button.addEventListener('click', () => this.removeEnfermo(setor.id, button.dataset.removeEnfermo));
+        });
+    },
+
+    renderSetorActions(setor, user) {
+        const actions = document.getElementById('setor-actions');
+        const buttons = [];
+
+        if (DB.can(user, 'add-enfermo', setor.id)) {
+            buttons.push('<button class="primary-action" type="button" id="btn-add-enfermo">NOVO ENFERMO</button>');
+        }
+        if (user.role === 'coordenador') {
+            buttons.push('<button class="secondary-action" type="button" id="btn-manage-team">GERENCIAR EQUIPE</button>');
+            buttons.push('<button class="secondary-action" type="button" id="btn-dashboard-sector">VER RELATÓRIO</button>');
+        }
+
+        actions.innerHTML = buttons.join('');
+
+        document.getElementById('btn-add-enfermo')?.addEventListener('click', () => this.openEnfermoModal(setor.id));
+        document.getElementById('btn-manage-team')?.addEventListener('click', () => this.openTeamModal(setor.id));
+        document.getElementById('btn-dashboard-sector')?.addEventListener('click', () => {
+            this.renderDashboard(setor.id);
+        });
+    },
+
+    backFromSetor() {
+        if (this.lastSetorSource === 'matriz') {
+            this.renderMatriz();
+        } else {
+            this.renderLocalidades();
+        }
+    },
+
+    renderDashboard(preselectedSetorId = null) {
+        const user = Auth.getUsuario();
+        if (user.role !== 'coordenador') {
+            this.showToast('ACESSO RESTRITO AO COORDENADOR.', 'error');
+            return;
+        }
+
+        const filter = document.getElementById('dashboard-filter');
+        if (!filter.options.length) {
+            filter.innerHTML = '<option value="todos">TODOS OS SETORES</option>' + DB.getSetores().map(setor => `<option value="${setor.id}">${this.escape(setor.nome)}</option>`).join('');
+        }
+        if (preselectedSetorId) filter.value = preselectedSetorId;
+
+        const data = DB.getDashboard(filter.value || 'todos');
+        const busiestName = data.busiest ? data.busiest.nome : 'SEM DADOS';
+        const lastAltered = data.audit[0] ? `${data.audit[0].acao} - ${data.audit[0].alvo}` : 'SEM ALTERAÇÕES';
+
+        document.getElementById('dashboard-metrics').innerHTML = `
+            <article class="metric-card"><span>SETOR MAIS MOVIMENTADO</span><strong>${this.escape(busiestName)}</strong><b>${data.busiest?.enfermos.length || 0}</b></article>
+            <article class="metric-card"><span>TOTAL DE ENFERMOS</span><strong>CADASTRADOS</strong><b>${data.totalEnfermos}</b></article>
+            <article class="metric-card"><span>AGENTES NO FILTRO</span><strong>AGENTES</strong><b>${data.totalAgentes}</b></article>
+            <article class="metric-card"><span>IDADE MÉDIA</span><strong>ENFERMOS</strong><b>${data.avgAge}</b></article>
+            <article class="metric-card panel--wide"><span>ÚLTIMA ALTERAÇÃO</span><strong>${this.escape(lastAltered)}</strong></article>
+        `;
+
+        this.renderSectorTable(data.sectors);
+        this.renderUserTable();
+        this.renderAuditTable(data.audit);
+        this.showView('dashboard');
+    },
+
+    renderSectorTable(sectors) {
+        document.getElementById('dashboard-sector-table').innerHTML = `
+            <thead><tr><th>SETOR</th><th>LOCALIDADE</th><th>ENFERMOS</th><th>RESPONSÁVEIS</th><th>AGENTES</th><th>ÚLTIMA ALTERAÇÃO</th></tr></thead>
+            <tbody>
+                ${sectors.map(setor => {
+                    const localidade = DB.getLocalidades().find(item => item.id === setor.localidadeId);
+                    const last = DB.state.audit.find(item => item.setorId === setor.id);
+                    return `<tr>
+                        <td data-label="SETOR">${this.escape(setor.nome)}</td>
+                        <td data-label="LOCALIDADE">${this.escape(localidade.nome)}</td>
+                        <td data-label="ENFERMOS">${setor.enfermos.length}</td>
+                        <td data-label="RESPONSÁVEIS">${setor.responsaveis.length}</td>
+                        <td data-label="AGENTES">${setor.agentes.length}</td>
+                        <td data-label="ÚLTIMA ALTERAÇÃO">${last ? DB.formatDate(last.data) : 'SEM REGISTRO'}</td>
+                    </tr>`;
+                }).join('')}
+            </tbody>
+        `;
+    },
+
+    renderUserTable() {
+        document.getElementById('dashboard-user-table').innerHTML = `
+            <thead><tr><th>NOME</th><th>FUNÇÃO</th><th>TELEFONE</th><th>SETORES</th><th>AÇÕES</th></tr></thead>
+            <tbody>
+                ${DB.getUsuarios().map(user => `<tr>
+                    <td data-label="NOME">${this.escape(user.nome)}</td>
+                    <td data-label="FUNÇÃO">${this.roleLabel(user.role)}</td>
+                    <td data-label="TELEFONE">${this.escape(user.telefone)}</td>
+                    <td data-label="SETORES">${user.role === 'coordenador' ? 'TODOS' : user.setores.length}</td>
+                    <td data-label="AÇÕES"><span class="table-actions"><button class="secondary-action" type="button" data-edit-user="${user.id}">EDITAR</button><button class="danger-action" type="button" data-remove-user="${user.id}">REMOVER</button></span></td>
+                </tr>`).join('')}
+            </tbody>
+        `;
+
+        document.querySelectorAll('[data-edit-user]').forEach(button => button.addEventListener('click', () => this.openUserModal(button.dataset.editUser)));
+        document.querySelectorAll('[data-remove-user]').forEach(button => button.addEventListener('click', () => this.removeUser(button.dataset.removeUser)));
+    },
+
+    renderAuditTable(audit) {
+        document.getElementById('dashboard-audit-table').innerHTML = `
+            <thead><tr><th>DATA</th><th>QUEM</th><th>AÇÃO</th><th>SETOR</th><th>ALVO</th></tr></thead>
+            <tbody>
+                ${audit.length ? audit.map(item => `<tr>
+                    <td data-label="DATA">${DB.formatDate(item.data)}</td>
+                    <td data-label="QUEM">${this.escape(item.usuarioNome)}</td>
+                    <td data-label="AÇÃO">${this.escape(item.acao)}</td>
+                    <td data-label="SETOR">${this.escape(item.setorNome || 'GERAL')}</td>
+                    <td data-label="ALVO">${this.escape(item.alvo)}</td>
+                </tr>`).join('') : '<tr><td colspan="5">NENHUMA ALTERAÇÃO REGISTRADA</td></tr>'}
+            </tbody>
+        `;
+    },
+
+    openEnfermoModal(setorId, enfermoId = null) {
+        const setor = DB.getSetor(setorId);
+        const enfermo = setor.enfermos.find(item => item.id === enfermoId) || { nome: '', idade: '' };
+        this.openModal(enfermoId ? 'EDITAR ENFERMO' : 'NOVO ENFERMO', `
+            <input type="hidden" name="id" value="${this.escape(enfermo.id || '')}">
+            <label class="field"><span>NOME DO ENFERMO</span><input name="nome" required value="${this.escape(enfermo.nome)}"></label>
+            <label class="field"><span>IDADE</span><input name="idade" type="number" min="0" max="120" required value="${this.escape(enfermo.idade)}"></label>
+            <button class="primary-action" type="submit">SALVAR</button>
+        `, async form => {
+            const formData = new FormData(form);
+            await DB.saveEnfermo(setorId, Object.fromEntries(formData.entries()), Auth.getUsuario());
+            this.closeModal();
+            this.renderSetor(setorId);
+            this.showToast('ENFERMO SALVO COM SUCESSO.', 'success');
+        });
+    },
+
+    async removeEnfermo(setorId, enfermoId) {
+        if (!confirm('CONFIRMAR REMOÇÃO DO ENFERMO?')) return;
+        try {
+            await DB.removeEnfermo(setorId, enfermoId, Auth.getUsuario());
+            this.renderSetor(setorId);
+            this.showToast('ENFERMO REMOVIDO.', 'warning');
+        } catch (error) {
+            this.showToast(error.message, 'error');
+        }
+    },
+
+    openTeamModal(setorId) {
+        const setor = DB.getSetor(setorId);
+        this.openModal('GERENCIAR EQUIPE DO SETOR', `
+            <label class="field"><span>RESPONSÁVEIS</span>${this.checkboxGrid('responsaveis', DB.getUsuarios().filter(u => u.role === 'responsavel'), setor.responsaveis)}</label>
+            <label class="field"><span>AGENTES</span>${this.checkboxGrid('agentes', DB.getUsuarios().filter(u => u.role === 'agente'), setor.agentes)}</label>
+            <button class="primary-action" type="submit">SALVAR EQUIPE</button>
+        `, async form => {
+            DB.requirePermission(Auth.getUsuario(), 'manage-users');
+            setor.responsaveis = Array.from(form.querySelectorAll('input[name="responsaveis"]:checked')).map(input => input.value);
+            setor.agentes = Array.from(form.querySelectorAll('input[name="agentes"]:checked')).map(input => input.value);
+            DB.audit(Auth.getUsuario(), 'EDITOU EQUIPE', setor.id, setor.nome);
+            await DB.persist();
+            this.closeModal();
+            this.renderSetor(setorId);
+            this.showToast('EQUIPE ATUALIZADA.', 'success');
+        });
+    },
+
+    openUserModal(userId = null) {
+        const user = userId ? DB.getUsuario(userId) : { nome: '', telefone: '', role: 'responsavel', setores: [] };
+        this.openModal(userId ? 'EDITAR USUÁRIO' : 'NOVO USUÁRIO', `
+            <input type="hidden" name="id" value="${this.escape(user.id || '')}">
+            <label class="field"><span>NOME COMPLETO</span><input name="nome" required value="${this.escape(user.nome)}"></label>
+            <label class="field"><span>TELEFONE</span><input name="telefone" required maxlength="15" value="${this.escape(user.telefone)}"></label>
+            <label class="field"><span>FUNÇÃO</span><select name="role" required>
+                <option value="responsavel" ${user.role === 'responsavel' ? 'selected' : ''}>RESPONSÁVEL</option>
+                <option value="agente" ${user.role === 'agente' ? 'selected' : ''}>AGENTE</option>
+                <option value="coordenador" ${user.role === 'coordenador' ? 'selected' : ''}>COORDENADOR</option>
+            </select></label>
+            <label class="field"><span>SENHA DO COORDENADOR</span><input name="senha" type="password" value="${this.escape(user.senha || '')}" placeholder="APENAS PARA COORDENADOR"></label>
+            <label class="field"><span>SETORES PERMITIDOS</span>${this.checkboxGrid('setores', DB.getSetores().map(setor => ({ id: setor.id, nome: setor.nome })), user.setores || [])}</label>
+            <button class="primary-action" type="submit">SALVAR USUÁRIO</button>
+        `, async form => {
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            data.setores = Array.from(form.querySelectorAll('input[name="setores"]:checked')).map(input => input.value);
+            await DB.saveUser(data, Auth.getUsuario());
+            this.populateAutocomplete();
+            this.closeModal();
+            this.renderDashboard();
+            this.showToast('USUÁRIO SALVO.', 'success');
+        });
+    },
+
+    async removeUser(userId) {
+        if (!confirm('CONFIRMAR REMOÇÃO DESTE USUÁRIO?')) return;
+        try {
+            await DB.removeUser(userId, Auth.getUsuario());
+            this.populateAutocomplete();
+            this.renderDashboard();
+            this.showToast('USUÁRIO REMOVIDO.', 'warning');
+        } catch (error) {
+            this.showToast(error.message, 'error');
+        }
+    },
+
+    openModal(title, fieldsHtml, onSubmit) {
+        document.getElementById('entity-modal-title').textContent = title;
+        const form = document.getElementById('entity-form');
+        form.innerHTML = fieldsHtml;
+        form.onsubmit = async event => {
+            event.preventDefault();
+            try {
+                await onSubmit(form);
+            } catch (error) {
+                this.showToast(error.message || 'NÃO FOI POSSÍVEL SALVAR.', 'error');
+            }
+        };
+        form.querySelectorAll('input[type="text"], input:not([type]), textarea').forEach(input => {
+            input.addEventListener('input', event => {
+                event.target.value = DB.normalizeText(event.target.value);
             });
-
-        } catch (error) {
-            container.innerHTML = '<p class="loading">Erro ao carregar setores. Verifique a conexão.</p>';
-            console.error(error);
-        } finally {
-            // Mostra o botão de adicionar setor após o carregamento (se for admin)
-            const usuario = Auth.getUsuario();
-            if (usuario && usuario.isAdmin) {
-                document.getElementById('btn-novo-setor').classList.remove('hidden');
-            }
-        }
-    },
-
-    /**
-     * Abre o modal de um setor específico
-     */
-    async abrirSetor(setorId) {
-        try {
-            const setor = await DB.getSetor(setorId);
-            const enfermos = await DB.getEnfermos(setorId);
-
-            this.setorAtual = setorId;
-
-            // Preenche dados do setor
-            document.getElementById('setor-nome').textContent = setor.nome;
-            document.getElementById('setor-horario').textContent = setor.horario;
-
-            // Responsáveis
-            const listaResponsaveis = document.getElementById('setor-responsaveis');
-            const isAdmin = Auth.isAdmin();
-
-            const iconRemoveSmall = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-            const iconAdd = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
-
-            let responsaveisHtml = setor.responsaveis.map(r => {
-                const isObj = typeof r === 'object';
-                const nome = isObj ? r.nome : r;
-                // O número só deve ser visível para Admins
-                const telefone = (isObj && isAdmin) ? r.telefone : '';
-                const nomeExibicao = formatarNomeExibicao(nome);
-                const display = `${nomeExibicao} ${telefone ? '<small style="color:var(--color-text-muted); font-weight:normal">(' + telefone + ')</small>' : ''}`;
-
-                if (isAdmin) {
-                    return `<li class="responsavel-item" data-responsavel="${nome}" data-telefone="${telefone || ''}" title="Clique para editar">${display}<button class="responsavel-remove" data-remove-nome="${nome}" data-remove-telefone="${telefone || ''}" title="Remover">${iconRemoveSmall}</button></li>`;
-                }
-                return `<li>${display}</li>`;
-            }).join('');
-
-            // Adiciona botão de + se for admin
-            if (isAdmin) {
-                responsaveisHtml += `<li class="responsavel-add" id="btn-add-responsavel" title="Adicionar responsável">${iconAdd}</li>`;
-            }
-
-            listaResponsaveis.innerHTML = responsaveisHtml;
-
-            // Eventos para responsáveis (admin)
-            if (isAdmin) {
-                listaResponsaveis.querySelectorAll('.responsavel-item').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        if (!e.target.closest('.responsavel-remove')) {
-                            const nome = item.dataset.responsavel;
-                            const telefone = item.dataset.telefone;
-                            this.abrirEditarResponsavel(nome, telefone);
-                        }
-                    });
-                });
-
-                listaResponsaveis.querySelectorAll('.responsavel-remove').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const nome = btn.dataset.removeNome;
-                        const telefone = btn.dataset.removeTelefone;
-                        this.confirmarRemoverResponsavel(nome, telefone);
-                    });
-                });
-
-                const btnAddResp = document.getElementById('btn-add-responsavel');
-                if (btnAddResp) {
-                    btnAddResp.addEventListener('click', () => this.abrirAdicionarResponsavel());
-                }
-            }
-
-            // Enfermos
-            const listaEnfermos = document.getElementById('setor-enfermos');
-            const usuario = Auth.getUsuario();
-            const podeEditar = usuario && (usuario.isAdmin || usuario.setorId === setorId);
-
-            const enfermosVisiveis = isAdmin ? enfermos : enfermos.filter(e => e.status === 'ativo');
-
-            if (enfermosVisiveis.length === 0) {
-                listaEnfermos.innerHTML = '<li class="loading">Nenhum enfermo cadastrado</li>';
-            } else {
-                // SVG icons for edit and remove buttons
-                const iconEdit = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
-                const iconRemove = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-                const iconPending = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
-
-                listaEnfermos.innerHTML = enfermosVisiveis.map((e, index) => {
-                    const isPendente = e.status !== 'ativo';
-                    const statusTexto = e.status === 'pendente_remocao'
-                        ? `${iconPending}Remoção pendente: ${e.motivoPendencia}`
-                        : e.status === 'pendente_edicao'
-                            ? `${iconPending}Edição pendente`
-                            : e.status === 'pendente_adicao'
-                                ? `${iconPending}Inclusão pendente`
-                                : '';
-
-                    const nomeExibicao = isAdmin ? e.nome : formatarNomeExibicao(e.nome);
-                    const telefoneHtml = isAdmin ? ` - ${e.telefone || 'SEM TELEFONE'}` : '';
-                    const enderecoHtml = isAdmin ? `<div class="enfermo-item__endereco">${e.endereco}</div>` : '';
-
-                    return `
-                        <li class="enfermo-item ${isPendente ? 'enfermo-item--pendente' : ''}" style="animation-delay: ${index * 50}ms">
-                            <div class="enfermo-item__info">
-                                <div class="enfermo-item__nome">${nomeExibicao}</div>
-                                <div class="enfermo-item__idade">${e.idade} ANOS${telefoneHtml}</div>
-                                ${enderecoHtml}
-                                ${statusTexto ? `<div class="enfermo-item__status">${statusTexto}</div>` : ''}
-                            </div>
-                            ${!isPendente ? `
-                                <div class="enfermo-item__actions">
-                                    <button class="btn btn--primary btn--small" data-editar="${e.id}" title="Editar">${iconEdit} EDITAR</button>
-                                    <button class="btn btn--danger btn--small" data-remover="${e.id}" title="Remover">${iconRemove} REMOVER</button>
-                                </div>
-                            ` : ''}
-                        </li>
-                    `;
-                }).join('');
-
-                // Eventos de editar/remover
-                listaEnfermos.querySelectorAll('[data-editar]').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const enfermoId = btn.dataset.editar;
-                        const enfermo = enfermos.find(en => en.id === enfermoId);
-                        this.abrirEditarEnfermo(enfermo);
-                    });
-                });
-
-                listaEnfermos.querySelectorAll('[data-remover]').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const enfermoId = btn.dataset.remover;
-                        const enfermo = enfermos.find(en => en.id === enfermoId);
-                        this.abrirRemoverEnfermo(enfermo);
-                    });
-                });
-            }
-
-            // Exibe pendências do setor para Admins
-            const pendenciasContainer = document.getElementById('setor-pendencias-container');
-            const pendenciasLista = document.getElementById('setor-pendencias-lista');
-
-            if (isAdmin) {
-                const pendencias = await DB.getPendenciasSetor(setorId);
-                if (pendencias.length > 0) {
-                    pendenciasContainer.classList.remove('hidden');
-
-                    const iconCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-                    const iconX = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-
-                    pendenciasLista.innerHTML = pendencias.map((p, index) => {
-                        const tipo = p.status === 'pendente_remocao' ? 'Remoção' : p.status === 'pendente_edicao' ? 'Edição' : 'Inclusão';
-                        const detalhe = p.status === 'pendente_remocao'
-                            ? `Motivo: ${p.motivoPendencia}`
-                            : p.status === 'pendente_edicao'
-                                ? `Novo: ${p.edicaoPendente.nome} - ${p.edicaoPendente.idade} ANOS - ${p.edicaoPendente.telefone || ''} - ${p.edicaoPendente.endereco}`
-                                : `Dados: ${p.nome} - ${p.idade} ANOS - ${p.telefone} - ${p.endereco}`;
-
-                        return `
-                            <li class="pendencia-item" style="animation: slideUp var(--transition-smooth) backwards; animation-delay: ${index * 50}ms">
-                                <div class="pendencia-item__header">
-                                    <span class="pendencia-item__tipo">${tipo}</span>
-                                </div>
-                                <div class="pendencia-item__nome">${p.nome}</div>
-                                <div class="pendencia-item__detalhe">${detalhe}</div>
-                                <div class="pendencia-item__actions">
-                                    <button class="btn btn--success btn--small" data-aprovar-modal="${p.setorId}|${p.enfermoId}|${p.status === 'pendente_remocao' ? 'remocao' : p.status === 'pendente_edicao' ? 'edicao' : 'adicao'}">
-                                        ${iconCheck} APROVAR
-                                    </button>
-                                    <button class="btn btn--danger btn--small" data-rejeitar-modal="${p.setorId}|${p.enfermoId}">
-                                        ${iconX} REJEITAR
-                                    </button>
-                                </div>
-                            </li>
-                        `;
-                    }).join('');
-
-                    // Eventos de aprovar/rejeitar dentro do modal
-                    pendenciasLista.querySelectorAll('[data-aprovar-modal]').forEach(btn => {
-                        btn.addEventListener('click', async () => {
-                            const [sId, eId, tipo] = btn.dataset.aprovarModal.split('|');
-                            await this.aprovarPendencia(sId, eId, tipo);
-                            await this.abrirSetor(setorId); // Recarrega o modal
-                        });
-                    });
-
-                    pendenciasLista.querySelectorAll('[data-rejeitar-modal]').forEach(btn => {
-                        btn.addEventListener('click', async () => {
-                            const [sId, eId] = btn.dataset.rejeitarModal.split('|');
-                            await this.rejeitarPendencia(sId, eId);
-                            await this.abrirSetor(setorId); // Recarrega o modal
-                        });
-                    });
-                } else {
-                    pendenciasContainer.classList.add('hidden');
-                }
-            } else {
-                pendenciasContainer.classList.add('hidden');
-            }
-
-            // Botão de adicionar (Sempre visível agora)
-            const btnAdd = document.getElementById('btn-add-enfermo');
-            btnAdd.classList.remove('hidden');
-
-            this.abrirModal('modal-setor');
-
-        } catch (error) {
-            this.mostrarToast('Erro ao carregar setor', 'error');
-            console.error(error);
-        }
-    },
-
-    /**
-     * Abre modal de adicionar enfermo
-     */
-    abrirAdicionarEnfermo() {
-        const usuario = Auth.getUsuario();
-
-        if (!usuario) {
-            this.abrirModal('modal-login');
-            return;
-        }
-
-        document.getElementById('adicionar-setor-id').value = this.setorAtual;
-        document.getElementById('form-adicionar').reset();
-        this.abrirModal('modal-adicionar');
-    },
-
-    /**
-     * Abre modal de editar enfermo
-     */
-    abrirEditarEnfermo(enfermo) {
-        const usuario = Auth.getUsuario();
-
-        if (!usuario) {
-            this.abrirModal('modal-login');
-            return;
-        }
-
-        if (!usuario.isAdmin && usuario.setorId !== this.setorAtual) {
-            this.mostrarToast('Você não tem permissão neste setor', 'error');
-            return;
-        }
-
-        document.getElementById('editar-id').value = enfermo.id;
-        document.getElementById('editar-setor-id').value = this.setorAtual;
-        document.getElementById('editar-nome').value = enfermo.nome;
-        document.getElementById('editar-endereco').value = enfermo.endereco;
-        document.getElementById('editar-idade').value = enfermo.idade || '';
-        document.getElementById('editar-telefone').value = enfermo.telefone || '';
-
-        this.abrirModal('modal-editar');
-    },
-
-    /**
-     * Abre modal de remover enfermo
-     */
-    abrirRemoverEnfermo(enfermo) {
-        const usuario = Auth.getUsuario();
-
-        if (!usuario) {
-            this.abrirModal('modal-login');
-            return;
-        }
-
-        if (!usuario.isAdmin && usuario.setorId !== this.setorAtual) {
-            this.mostrarToast('Você não tem permissão neste setor', 'error');
-            return;
-        }
-
-        document.getElementById('remover-id').value = enfermo.id;
-        document.getElementById('remover-setor-id').value = this.setorAtual;
-        document.getElementById('remover-nome-enfermo').textContent = `Remover: ${enfermo.nome}`;
-        document.getElementById('form-remover').reset();
-
-        // Reset outro container state
-        document.getElementById('remover-outro-container').classList.add('hidden');
-        document.getElementById('remover-erro').classList.add('hidden');
-
-        this.abrirModal('modal-remover');
-    },
-
-    /**
-     * Abre modal de pendências (admin)
-     */
-    async abrirPendencias() {
-        if (!Auth.isAdmin()) {
-            this.mostrarToast('Acesso restrito a administradores', 'error');
-            return;
-        }
-
-        const lista = document.getElementById('lista-pendencias');
-        lista.innerHTML = '<li class="loading">Carregando...</li>';
-
-        this.abrirModal('modal-pendencias');
-
-        try {
-            const pendencias = await DB.getPendencias();
-
-            if (pendencias.length === 0) {
-                lista.innerHTML = '<li class="pendencia--vazia">Nenhuma pendência no momento</li>';
-                return;
-            }
-
-            // SVG icons for buttons
-            const iconCheck = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>`;
-            const iconX = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
-
-            lista.innerHTML = pendencias.map((p, index) => {
-                const tipo = p.status === 'pendente_remocao' ? 'Remoção' : p.status === 'pendente_edicao' ? 'Edição' : 'Inclusão';
-                const detalhe = p.status === 'pendente_remocao'
-                    ? `Motivo: ${p.motivoPendencia}`
-                    : p.status === 'pendente_edicao'
-                        ? `Novo: ${p.edicaoPendente.nome} - ${p.edicaoPendente.idade} ANOS - ${p.edicaoPendente.endereco}`
-                        : `Dados: ${p.nome} - ${p.idade} ANOS - ${p.endereco}`;
-
-                return `
-                    <li class="pendencia-item" style="animation: slideUp var(--transition-smooth) backwards; animation-delay: ${index * 50}ms">
-                        <div class="pendencia-item__header">
-                            <span class="pendencia-item__tipo">${tipo}</span>
-                            <span class="pendencia-item__setor">${p.setorNome}</span>
-                        </div>
-                        <div class="pendencia-item__nome">${p.nome}</div>
-                        <div class="pendencia-item__detalhe">${detalhe}</div>
-                        <div class="pendencia-item__actions">
-                            <button class="btn btn--success btn--small" data-aprovar="${p.setorId}|${p.enfermoId}|${p.status === 'pendente_remocao' ? 'remocao' : p.status === 'pendente_edicao' ? 'edicao' : 'adicao'}">
-                                ${iconCheck} APROVAR
-                            </button>
-                            <button class="btn btn--danger btn--small" data-rejeitar="${p.setorId}|${p.enfermoId}">
-                                ${iconX} REJEITAR
-                            </button>
-                        </div>
-                    </li>
-                `;
-            }).join('');
-
-            // Eventos de aprovar/rejeitar
-            lista.querySelectorAll('[data-aprovar]').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const [setorId, enfermoId, tipo] = btn.dataset.aprovar.split('|');
-                    await this.aprovarPendencia(setorId, enfermoId, tipo);
-                });
+        });
+        form.querySelectorAll('input[name="telefone"]').forEach(input => {
+            input.addEventListener('input', event => {
+                event.target.value = this.formatPhone(event.target.value);
             });
-
-            lista.querySelectorAll('[data-rejeitar]').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const [setorId, enfermoId] = btn.dataset.rejeitar.split('|');
-                    await this.rejeitarPendencia(setorId, enfermoId);
-                });
-            });
-
-        } catch (error) {
-            lista.innerHTML = '<li class="loading">Erro ao carregar pendências</li>';
-            console.error(error);
-        }
-    },
-
-    /**
-     * Handle do formulário de login
-     */
-    async handleLogin(e) {
-        e.preventDefault();
-
-        const nome = document.getElementById('login-nome').value.toUpperCase();
-        const telefone = document.getElementById('login-telefone').value;
-        const erroEl = document.getElementById('login-erro');
-
-        erroEl.classList.add('hidden');
-
-        try {
-            await Auth.login(nome, telefone);
-            this.mostrarToast('Identificação confirmada!');
-
-            this.atualizarUI();
-            await this.fecharTodosModais();
-
-            // Se estava tentando editar/remover, reabre o setor
-            if (this.setorAtual) {
-                await this.abrirSetor(this.setorAtual);
-            }
-
-        } catch (error) {
-            erroEl.textContent = error.message;
-            erroEl.classList.remove('hidden');
-        }
-    },
-
-    /**
-     * Handle do formulário de login admin
-     */
-    async handleLoginAdmin(e) {
-        e.preventDefault();
-
-        const email = document.getElementById('admin-email').value;
-        const senha = document.getElementById('admin-senha').value;
-        const erroEl = document.getElementById('admin-erro');
-
-        erroEl.classList.add('hidden');
-
-        try {
-            await Auth.loginAdmin(email, senha);
-            this.mostrarToast('Bem-vindo, administrador!');
-
-            this.atualizarUI();
-            await this.fecharTodosModais();
-
-        } catch (error) {
-            erroEl.textContent = error.message || 'Email ou senha incorretos';
-            erroEl.classList.remove('hidden');
-        }
-    },
-
-    /**
-     * Handle do formulário de adicionar enfermo
-     */
-    async handleAdicionarEnfermo(e) {
-        e.preventDefault();
-
-        const setorId = document.getElementById('adicionar-setor-id').value;
-        const nome = document.getElementById('adicionar-nome').value.toUpperCase();
-        const endereco = document.getElementById('adicionar-endereco').value.toUpperCase();
-        const idade = document.getElementById('adicionar-idade').value;
-        const telefone = document.getElementById('adicionar-telefone').value;
-
-        const usuario = Auth.getUsuario();
-
-        // Se não estiver logado, pede identificação
-        if (!usuario) {
-            this.abrirModal('modal-login');
-            return;
-        }
-
-        try {
-            // Se for admin, adiciona direto
-            if (usuario.isAdmin) {
-                await DB.addEnfermo(setorId, { nome, endereco, idade, telefone });
-                this.mostrarToast('Enfermo adicionado com sucesso!');
-            }
-            // Se for o responsável do setor, entra como pendência de adição
-            else if (usuario.setorId === setorId) {
-                await DB.solicitarAdicao(setorId, { nome, endereco, idade, telefone });
-                this.mostrarToast('Inclusão solicitada para aprovação do administrador.');
-            }
-            // Não é admin nem responsável deste setor
-            else {
-                throw new Error('Você não tem permissão para adicionar enfermos neste setor.');
-            }
-
-            await this.fecharModal('modal-adicionar');
-            await this.abrirSetor(setorId);
-            await this.carregarSetores();
-        } catch (error) {
-            this.mostrarToast(error.message || 'Erro ao adicionar enfermo', 'error');
-            console.error(error);
-        }
-    },
-
-    /**
-     * Handle do formulário de editar enfermo
-     */
-    async handleEditarEnfermo(e) {
-        e.preventDefault();
-
-        const enfermoId = document.getElementById('editar-id').value;
-        const setorId = document.getElementById('editar-setor-id').value;
-        const nome = document.getElementById('editar-nome').value.toUpperCase();
-        const endereco = document.getElementById('editar-endereco').value.toUpperCase();
-        const idade = document.getElementById('editar-idade').value;
-        const telefone = document.getElementById('editar-telefone').value;
-
-        try {
-            // Se for admin, edita diretamente
-            if (Auth.isAdmin()) {
-                await DB.editarEnfermoDireto(setorId, enfermoId, { nome, endereco, idade, telefone });
-                this.mostrarToast('Enfermo atualizado com sucesso!');
-            } else {
-                await DB.solicitarEdicao(setorId, enfermoId, { nome, endereco, idade, telefone });
-                this.mostrarToast('Edição solicitada. Aguardando aprovação.');
-            }
-            await this.fecharModal('modal-editar');
-            await this.abrirSetor(setorId);
-            await this.carregarSetores();
-        } catch (error) {
-            this.mostrarToast('Erro ao editar enfermo', 'error');
-            console.error(error);
-        }
-    },
-
-    /**
-     * Handle do formulário de remover enfermo
-     */
-    async handleRemoverEnfermo(e) {
-        e.preventDefault();
-
-        const enfermoId = document.getElementById('remover-id').value;
-        const setorId = document.getElementById('remover-setor-id').value;
-        let motivo = document.getElementById('remover-motivo').value;
-        const erroEl = document.getElementById('remover-erro');
-
-        // Se motivo for "Outro", validar campo customizado
-        if (motivo === 'Outro') {
-            const outroMotivo = document.getElementById('remover-outro-motivo').value.trim().toUpperCase();
-            if (outroMotivo.length < 4) {
-                erroEl.classList.remove('hidden');
-                return;
-            }
-            motivo = `OUTRO: ${outroMotivo}`;
-            erroEl.classList.add('hidden');
-        }
-
-        try {
-            // Se for admin, remove diretamente
-            if (Auth.isAdmin()) {
-                await DB.removerEnfermoDireto(setorId, enfermoId);
-                this.mostrarToast('Enfermo removido com sucesso!');
-            } else {
-                await DB.solicitarRemocao(setorId, enfermoId, motivo);
-                this.mostrarToast('Remoção solicitada. Aguardando aprovação.');
-            }
-            await this.fecharModal('modal-remover');
-            await this.abrirSetor(setorId);
-            await this.carregarSetores();
-        } catch (error) {
-            this.mostrarToast('Erro ao remover enfermo', 'error');
-            console.error(error);
-        }
-    },
-
-    /**
-     * Abre modal de novo setor (reseta form)
-     */
-    abrirNovoSetor() {
-        document.getElementById('form-novo-setor').reset();
-        this.abrirModal('modal-novo-setor');
-    },
-
-    /**
-     * Handle do formulário de novo setor
-     */
-    async handleNovoSetor(e) {
-        e.preventDefault();
-
-        if (!Auth.isAdmin()) return;
-
-        const numero = parseInt(document.getElementById('novo-setor-numero').value);
-
-        // Validação: não permitir setores com o mesmo número
-        const numeroExistente = this.setores.some(s => {
-            const numSetor = parseInt(s.nome.replace('SETOR ', ''));
-            return numSetor === numero;
         });
-
-        if (numeroExistente) {
-            this.mostrarToast(`Já existe um SETOR ${String(numero).padStart(2, '0')}`, 'error');
-            return;
-        }
-
-        const dia = document.getElementById('novo-setor-dia').value;
-        const hora = document.getElementById('novo-setor-horario-fim').value;
-
-        // Formata horário: "SÁBADO, 14:00"
-        const horario = `${dia}, ${hora}`;
-
-        const nome = `SETOR ${String(numero).padStart(2, '0')}`;
-
-        try {
-            await DB.addSetor({ nome, horario });
-            this.mostrarToast('Setor criado com sucesso!');
-
-            await this.fecharModal('modal-novo-setor');
-            await this.carregarSetores();
-        } catch (error) {
-            this.mostrarToast('Erro ao criar setor', 'error');
-            console.error(error);
-        }
+        document.getElementById('entity-modal').classList.remove('hidden');
     },
 
-    /**
-     * Aprova uma pendência
-     */
-    async aprovarPendencia(setorId, enfermoId, tipo) {
-        try {
-            await DB.aprovarPendencia(setorId, enfermoId, tipo);
-            this.mostrarToast('Pendência aprovada!');
-            await this.abrirPendencias();
-            await this.carregarSetores();
-        } catch (error) {
-            this.mostrarToast('Erro ao aprovar pendência', 'error');
-            console.error(error);
-        }
+    closeModal() {
+        document.getElementById('entity-modal').classList.add('hidden');
+        document.getElementById('entity-form').innerHTML = '';
     },
 
-    /**
-     * Rejeita uma pendência
-     */
-    async rejeitarPendencia(setorId, enfermoId) {
-        try {
-            await DB.rejeitarPendencia(setorId, enfermoId);
-            this.mostrarToast('Pendência rejeitada. Enfermo restaurado.');
-            await this.abrirPendencias();
-            await this.carregarSetores();
-        } catch (error) {
-            this.mostrarToast('Erro ao rejeitar pendência', 'error');
-            console.error(error);
-        }
+    checkboxGrid(name, items, selected) {
+        return `<div class="checkbox-grid">${items.map(item => `
+            <label class="check-row">
+                <input type="checkbox" name="${name}" value="${item.id}" ${selected.includes(item.id) ? 'checked' : ''}>
+                <span>${this.escape(item.nome)}</span>
+            </label>
+        `).join('')}</div>`;
     },
 
-    /**
-     * Faz logout
-     */
-    async fazerLogout() {
-        const usuario = Auth.getUsuario();
-        const wasAdmin = usuario?.isAdmin;
-
-        await Auth.logout();
-        this.atualizarUI();
-        this.mostrarToast('Você saiu do sistema');
-
-        // Se era admin, recarrega a página para limpar estado
-        if (wasAdmin) {
-            location.reload();
-            return;
-        }
-
-        // Recarrega o setor atual se estiver aberto
-        if (this.setorAtual && document.getElementById('modal-setor').classList.contains('active')) {
-            this.abrirSetor(this.setorAtual);
-        }
+    formatPhone(value) {
+        let digits = DB.onlyDigits(value).slice(0, 11);
+        if (digits.length <= 2) return digits;
+        if (digits.length <= 6) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
+        if (digits.length <= 10) return `${digits.slice(0, 2)} ${digits.slice(2, 6)}-${digits.slice(6)}`;
+        return `${digits.slice(0, 2)} ${digits.slice(2, 7)}-${digits.slice(7)}`;
     },
 
-    /**
-     * Abre um modal
-     */
-    abrirModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.add('active');
-            // Adiciona à pilha se não for o último
-            if (this.modalStack[this.modalStack.length - 1] !== modalId) {
-                this.modalStack.push(modalId);
-            }
-        }
+    roleLabel(role) {
+        return {
+            coordenador: 'COORDENADOR',
+            responsavel: 'RESPONSÁVEL',
+            agente: 'AGENTE'
+        }[role] || 'USUÁRIO';
     },
 
-    /**
-     * Fecha um modal específico
-     */
-    async fecharModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.classList.add('closing');
-
-            // Espera a animação acabar (smooth transition é 500ms)
-            await new Promise(resolve => setTimeout(resolve, 500));
-
-            modal.classList.remove('active');
-            modal.classList.remove('closing');
-
-            // Remove da pilha
-            this.modalStack = this.modalStack.filter(id => id !== modalId);
-        }
-
-        // Remove estado de edição de qualquer responsável
-        document.querySelectorAll('.responsavel-item--editing').forEach(el => {
-            el.classList.remove('responsavel-item--editing');
-        });
-    },
-
-    /**
-     * Fecha o último modal aberto (pilha)
-     */
-    async fecharUltimoModal() {
-        if (this.modalStack.length > 0) {
-            const modalId = this.modalStack.pop();
-            await this.fecharModal(modalId);
-        }
-
-        // Sempre remove estado de edição ao fechar qualquer modal
-        document.querySelectorAll('.responsavel-item--editing').forEach(el => {
-            el.classList.remove('responsavel-item--editing');
-        });
-    },
-
-    async fecharTodosModais() {
-        const modaisAtivos = document.querySelectorAll('.modal.active');
-        if (modaisAtivos.length > 0) {
-            modaisAtivos.forEach(m => m.classList.add('closing'));
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
-
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.classList.remove('active');
-            modal.classList.remove('closing');
-        });
-        this.modalStack = [];
-
-        // Limpa estado de edição
-        document.querySelectorAll('.responsavel-item--editing').forEach(el => {
-            el.classList.remove('responsavel-item--editing');
-        });
-    },
-
-    /**
-     * Fecha modal atual e volta para o setor
-     */
-    async fecharModalVoltarSetor() {
-        await this.fecharUltimoModal();
-
-        // Se após fechar o último não houver nada na pilha, mas temos um setor atual, reabre o setor
-        if (this.modalStack.length === 0 && this.setorAtual) {
-            this.abrirSetor(this.setorAtual);
-        }
-    },
-
-    mostrarToast(mensagem, tipo = 'success') {
+    showToast(message, type = 'info') {
         const toast = document.getElementById('toast');
-        const toastMessage = document.getElementById('toast-message');
-        const closeBtn = document.getElementById('btn-close-toast');
-
-        toast.className = 'toast';
-        toast.classList.add(`toast--${tipo}`);
-        toastMessage.textContent = mensagem;
-
-        toast.classList.remove('hidden');
-
-        // Limpa o timer anterior se houver
-        if (this.toastTimer) clearTimeout(this.toastTimer);
-
-        // Define novo timer para 10 segundos
-        this.toastTimer = setTimeout(() => {
-            toast.classList.add('hidden');
-        }, 10000);
-
-        // Configura o botão de fechar
-        if (closeBtn) {
-            closeBtn.onclick = () => {
-                toast.classList.add('hidden');
-                if (this.toastTimer) clearTimeout(this.toastTimer);
-            };
-        }
+        document.getElementById('toast-message').textContent = message;
+        clearTimeout(this.toastTimer);
+        toast.dataset.state = type;
+        toast.classList.add('toast--visible');
+        this.toastTimer = setTimeout(() => this.hideToast(), 3200);
     },
 
-    /**
-     * Handle do login com Google
-     */
-    async handleGoogleLogin() {
-        try {
-            await Auth.loginAdminGoogle();
-            this.mostrarToast('Bem-vindo, administrador!');
-            this.atualizarUI();
-            await this.fecharTodosModais();
-        } catch (error) {
-            this.mostrarToast(error.message || 'Erro ao fazer login com Google', 'error');
-        }
+    hideToast() {
+        document.getElementById('toast').classList.remove('toast--visible');
     },
 
-    /**
-     * Abre modal de gerenciar administradores
-     */
-    async abrirGerenciarAdmins() {
-        if (!Auth.isAdmin()) {
-            this.mostrarToast('Acesso restrito a administradores', 'error');
-            return;
-        }
-
-        const lista = document.getElementById('lista-admins');
-        lista.innerHTML = '<li class="loading">Carregando...</li>';
-
-        this.abrirModal('modal-gerenciar-admins');
-
-        try {
-            // Busca a lista real de admins autorizados no Firestore
-            const admins = await Auth.listarAdmins();
-            const usuarioAtual = Auth.getUsuario();
-
-            const iconUser = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
-
-            if (admins.length === 0) {
-                lista.innerHTML = '<li class="loading">Nenhum administrador cadastrado</li>';
-                return;
-            }
-
-            lista.innerHTML = admins.map((admin, index) => {
-                const isVoce = usuarioAtual && usuarioAtual.email.toLowerCase() === admin.email.toLowerCase();
-                const nomeExibicao = admin.nome || admin.email.split('@')[0].toUpperCase();
-
-                return `
-                    <li class="admin-item" style="animation: slideUp var(--transition-smooth) backwards; animation-delay: ${index * 50}ms">
-                        <div class="admin-item__email">
-                            ${iconUser}
-                            <span style="margin-left: 8px;">${nomeExibicao}</span>
-                            <small style="display: block; margin-left: 26px; color: var(--color-text-muted); font-size: 11px; text-transform: none;">${admin.email}</small>
-                        </div>
-                        ${isVoce ? '<span class="admin-item__badge">Você</span>' : ''}
-                    </li>
-                `;
-            }).join('');
-
-        } catch (error) {
-            lista.innerHTML = '<li class="loading">Erro ao carregar lista de administradores</li>';
-            console.error(error);
-        }
-    },
-
-    /**
-     * Handle do formulário de adicionar admin
-     */
-    async handleAdicionarAdmin(e) {
-        e.preventDefault();
-
-        const nome = document.getElementById('novo-admin-nome').value.toUpperCase();
-        const email = document.getElementById('novo-admin-email').value;
-        const senha = document.getElementById('novo-admin-senha').value;
-        const erroEl = document.getElementById('add-admin-erro');
-
-        erroEl.classList.add('hidden');
-
-        try {
-            const result = await Auth.adicionarAdmin(nome, email, senha);
-
-            if (result.status === 'authorized') {
-                this.mostrarToast(`Email ${email} já existente, mas agora está autorizado como admin!`);
-            } else {
-                this.mostrarToast(`Administrador ${nome} adicionado com sucesso!`);
-            }
-
-            document.getElementById('form-add-admin').reset();
-            await this.abrirGerenciarAdmins();
-        } catch (error) {
-            erroEl.textContent = error.message || 'Erro ao adicionar administrador';
-            erroEl.classList.remove('hidden');
-        }
-    },
-
-    /**
-     * Abre modal para adicionar responsável
-     */
-    /**
-     * Abre modal para adicionar responsável
-     */
-    abrirAdicionarResponsavel() {
-        this.responsavelEmEdicao = null;
-        document.getElementById('responsavel-nome').value = '';
-        document.getElementById('responsavel-telefone').value = '';
-        document.getElementById('modal-responsavel-titulo').textContent = 'Adicionar Responsável';
-        document.getElementById('btn-salvar-responsavel').textContent = 'Adicionar';
-        this.abrirModal('modal-responsavel');
-    },
-
-    /**
-     * Abre modal para editar responsável
-     */
-    abrirEditarResponsavel(nome, telefone) {
-        // Remove edição anterior se houver
-        document.querySelectorAll('.responsavel-item--editing').forEach(el => el.classList.remove('responsavel-item--editing'));
-
-        // Encontra o item na lista para destacar
-        const itens = document.querySelectorAll('.responsavel-item');
-        itens.forEach(item => {
-            if (item.dataset.responsavel === nome) {
-                item.classList.add('responsavel-item--editing');
-            }
-        });
-
-        this.responsavelEmEdicao = { nome, telefone };
-        document.getElementById('responsavel-nome').value = nome;
-        document.getElementById('responsavel-telefone').value = telefone || '';
-        document.getElementById('modal-responsavel-titulo').textContent = 'Editar Responsável';
-        document.getElementById('btn-salvar-responsavel').textContent = 'Salvar';
-        this.abrirModal('modal-responsavel');
-    },
-
-    /**
-     * Abre modal de confirmação de remoção
-     */
-    confirmarRemoverResponsavel(nome, telefone) {
-        document.getElementById('remover-responsavel-nome').value = nome;
-        document.getElementById('remover-responsavel-telefone').value = telefone || '';
-        document.getElementById('remover-responsavel-texto').innerHTML = `Deseja remover o responsável <strong>${nome}</strong>?`;
-        this.abrirModal('modal-remover-responsavel');
-    },
-
-    /**
-     * Executa a remoção do responsável
-     */
-    async handleRemoverResponsavel(e) {
-        e.preventDefault();
-
-        const nome = document.getElementById('remover-responsavel-nome').value;
-        const telefone = document.getElementById('remover-responsavel-telefone').value;
-
-        try {
-            const responsavel = { nome, telefone };
-            await DB.removeResponsavel(this.setorAtual, responsavel);
-            await this.fecharModal('modal-remover-responsavel');
-            this.mostrarToast('Responsável removido!');
-            await this.abrirSetor(this.setorAtual);
-        } catch (error) {
-            this.mostrarToast('Erro ao remover responsável', 'error');
-            console.error(error);
-        }
-    },
-
-    /**
-     * Salva responsável (adicionar ou editar)
-     */
-    async handleSalvarResponsavel(e) {
-        e.preventDefault();
-
-        const nome = document.getElementById('responsavel-nome').value.trim().toUpperCase();
-        const telefone = document.getElementById('responsavel-telefone').value.trim();
-        const erroEl = document.getElementById('responsavel-erro');
-
-        if (!nome || !telefone) {
-            erroEl.textContent = 'Preencha nome e celular';
-            erroEl.classList.remove('hidden');
-            return;
-        }
-
-        if (telefone.length < 10) {
-            erroEl.textContent = 'Celular inválido';
-            erroEl.classList.remove('hidden');
-            return;
-        }
-
-        erroEl.classList.add('hidden');
-
-        try {
-            const novoResponsavel = { nome, telefone };
-
-            if (this.responsavelEmEdicao) {
-                // Editando
-                await DB.editarResponsavel(this.setorAtual, this.responsavelEmEdicao, novoResponsavel);
-                this.mostrarToast('Responsável atualizado!');
-            } else {
-                // Adicionando
-                await DB.addResponsavel(this.setorAtual, novoResponsavel);
-                this.mostrarToast('Responsável adicionado!');
-            }
-
-            await this.fecharModal('modal-responsavel');
-            await this.abrirSetor(this.setorAtual);
-        } catch (error) {
-            erroEl.textContent = 'Erro ao salvar responsável';
-            erroEl.classList.remove('hidden');
-            console.error(error);
-        }
+    escape(value) {
+        return String(value ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 };
 
-// Inicializa quando o DOM estiver pronto
-document.addEventListener('DOMContentLoaded', () => App.init());
+document.addEventListener('DOMContentLoaded', () => {
+    App.init().catch(error => {
+        console.error(error);
+        document.body.innerHTML = '<main class="login-screen"><div class="login-panel"><h1>ERRO AO CARREGAR</h1><p>VERIFIQUE A CONEXÃO E TENTE NOVAMENTE.</p></div></main>';
+    });
+});
+
+window.App = App;

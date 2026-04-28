@@ -4,437 +4,170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Sistema de Gestão de Setores e Enfermos">
-    <title>VISITA AMIGA - Pastoral da Saúde</title>
-    <!-- Favicon temporário -->
-    <link rel="icon" type="image/png"
-        href="https://raw.githubusercontent.com/GerlachSG/GestorEnfermos/refs/heads/main/src/img/Pastoral-da-Saude-FavIcon.png">
-    <link rel="stylesheet" href="src/styles/main.css">
+    <meta name="description" content="Sistema de gestão de setores e enfermos da Pastoral da Saúde">
+    <title>VISITA AMIGA - GESTÃO DE SETORES</title>
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/GerlachSG/GestorEnfermos/refs/heads/main/src/img/Pastoral-da-Saude-FavIcon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="src/styles/main.css">
 </head>
 
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header__container">
-            <div class="header__left">
-                <img src="https://www.catedralsaodimas.org.br/wp-content/uploads/2020/09/Pastoral-da-Saude.jpg"
-                    alt="Pastoral da Saúde" class="header__logo">
-                <p class="header__subtitle">Paróquia São Bento</p>
-                <p class="header__subtitle">Setores e Enfermos</p>
+    <header class="topbar" id="topbar">
+        <div class="topbar__brand">
+            <img class="topbar__logo" src="src/img/Pastoral-da-Saude-FavIcon.png" alt="PASTORAL DA SAÚDE">
+            <div class="topbar__brand-copy">
+                <strong>VISITA AMIGA</strong>
+                <span id="current-user-label">ACESSO NÃO IDENTIFICADO</span>
             </div>
-            <div class="header__right">
-                <button id="btn-logout" class="btn btn--header hidden">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                        <polyline points="16 17 21 12 16 7"></polyline>
-                        <line x1="21" y1="12" x2="9" y2="12"></line>
-                    </svg>
-                    <span id="btn-logout-text">Sair</span>
-                </button>
-                <button id="btn-pendencias" class="btn btn--header hidden">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <polyline points="12 6 12 12 16 14"></polyline>
-                    </svg>
-                    Pendências
-                </button>
-                <button id="btn-gerenciar-admins" class="btn btn--header hidden">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    Admins
-                </button>
-                <button id="btn-admin" class="btn btn--icon-bg" title="Administração" aria-label="Administração">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path
-                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                        </path>
-                    </svg>
-                </button>
-            </div>
+        </div>
+        <div class="topbar__actions">
+            <button class="icon-btn hidden" id="btn-dashboard" type="button" aria-label="ABRIR PAINEL DO COORDENADOR" title="PAINEL DO COORDENADOR">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"></rect><rect x="14" y="3" width="7" height="11" rx="1.5"></rect><rect x="3" y="14" width="7" height="7" rx="1.5"></rect><rect x="14" y="18" width="7" height="3" rx="1.5"></rect></svg>
+            </button>
+            <button class="icon-btn hidden" id="btn-home" type="button" aria-label="VOLTAR PARA LOCALIDADES" title="INÍCIO">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5"></path><path d="M6.5 10.5V20h11V10.5"></path></svg>
+            </button>
+            <button class="icon-btn hidden" id="btn-logout" type="button" aria-label="SAIR DO SISTEMA" title="SAIR">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17 15 12 10 7"></path><path d="M15 12H3"></path><path d="M13 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"></path></svg>
+            </button>
         </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="main">
-        <section class="setores" id="lista-setores">
-            <p class="loading">Carregando setores...</p>
+    <main class="app" id="app">
+        <section class="login-screen" id="view-login" aria-labelledby="login-title">
+            <div class="login-panel">
+                <img class="login-panel__logo" src="src/img/Pastoral-da-Saude-FavIcon.png" alt="PASTORAL DA SAÚDE">
+                <h1 id="login-title">VISITA AMIGA</h1>
+                <p>ENTRE COM SEU NOME E TELEFONE PARA ACESSAR O SISTEMA.</p>
+
+                <form class="form" id="form-login" autocomplete="on">
+                    <label class="field">
+                        <span>NOME COMPLETO</span>
+                        <input id="login-nome" name="nome" type="text" list="usuarios-lista" autocomplete="name" required placeholder="DIGITE SEU NOME COMPLETO">
+                        <datalist id="usuarios-lista"></datalist>
+                    </label>
+
+                    <label class="field">
+                        <span>NÚMERO DE TELEFONE</span>
+                        <input id="login-telefone" name="telefone" type="tel" inputmode="numeric" autocomplete="tel" maxlength="15" required placeholder="12 99999-9999">
+                    </label>
+
+                    <label class="field hidden" id="password-field">
+                        <span>SENHA DO COORDENADOR</span>
+                        <input id="login-senha" name="senha" type="password" autocomplete="current-password" placeholder="DIGITE A SENHA">
+                    </label>
+
+                    <p class="feedback feedback--error hidden" id="login-error" role="alert"></p>
+                    <button class="primary-action" type="submit">ENTRAR</button>
+                </form>
+            </div>
         </section>
-        <div class="main__actions" style="margin-top: var(--spacing-lg); display: flex; justify-content: center;">
-            <button id="btn-novo-setor" class="btn btn--success hidden">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                    <line x1="12" y1="8" x2="12" y2="16"></line>
-                    <line x1="8" y1="12" x2="16" y2="12"></line>
-                </svg>
-                ADICIONAR NOVO SETOR
-            </button>
-        </div>
+
+        <section class="screen hidden" id="view-localidades" aria-labelledby="localidades-title">
+            <div class="screen__header">
+                <p class="eyebrow">SELECIONE A LOCALIDADE</p>
+                <h1 id="localidades-title">LOCALIDADES</h1>
+            </div>
+            <div class="location-grid" id="localidades-grid"></div>
+        </section>
+
+        <section class="screen hidden" id="view-matriz" aria-labelledby="matriz-title">
+            <div class="screen__header screen__header--row">
+                <div>
+                    <p class="eyebrow">MATRIZ SÃO BENTO</p>
+                    <h1 id="matriz-title">SETORES INTERNOS</h1>
+                </div>
+                <button class="secondary-action" id="btn-voltar-localidades" type="button">VOLTAR</button>
+            </div>
+            <div class="sector-grid" id="matriz-setores-grid"></div>
+        </section>
+
+        <section class="screen hidden" id="view-setor" aria-labelledby="setor-title">
+            <div class="screen__header screen__header--row">
+                <div>
+                    <p class="eyebrow" id="setor-localidade">LOCALIDADE</p>
+                    <h1 id="setor-title">SETOR</h1>
+                </div>
+                <button class="secondary-action" id="btn-voltar-setores" type="button">VOLTAR</button>
+            </div>
+
+            <div class="section-actions" id="setor-actions"></div>
+
+            <div class="detail-layout">
+                <section class="panel" aria-labelledby="responsaveis-title">
+                    <h2 id="responsaveis-title">RESPONSÁVEIS</h2>
+                    <ul class="name-list" id="setor-responsaveis"></ul>
+                </section>
+                <section class="panel" aria-labelledby="agentes-title">
+                    <h2 id="agentes-title">AGENTES</h2>
+                    <ul class="name-list" id="setor-agentes"></ul>
+                </section>
+                <section class="panel panel--wide" aria-labelledby="enfermos-title">
+                    <h2 id="enfermos-title">ENFERMOS</h2>
+                    <ul class="people-list" id="setor-enfermos"></ul>
+                </section>
+            </div>
+        </section>
+
+        <section class="screen hidden" id="view-dashboard" aria-labelledby="dashboard-title">
+            <div class="screen__header screen__header--row">
+                <div>
+                    <p class="eyebrow">ÁREA DO COORDENADOR</p>
+                    <h1 id="dashboard-title">PAINEL E RELATÓRIOS</h1>
+                </div>
+                <button class="secondary-action" id="btn-dashboard-voltar" type="button">VOLTAR</button>
+            </div>
+
+            <div class="filters">
+                <label class="field field--compact">
+                    <span>FILTRAR SETOR</span>
+                    <select id="dashboard-filter"></select>
+                </label>
+                <button class="primary-action primary-action--compact" id="btn-novo-usuario" type="button">NOVO USUÁRIO</button>
+            </div>
+
+            <div class="metric-grid" id="dashboard-metrics"></div>
+
+            <section class="panel panel--wide">
+                <h2>QUANTIDADES POR SETOR</h2>
+                <div class="table-wrap">
+                    <table class="data-table" id="dashboard-sector-table"></table>
+                </div>
+            </section>
+
+            <section class="panel panel--wide">
+                <h2>USUÁRIOS E PERMISSÕES</h2>
+                <div class="table-wrap">
+                    <table class="data-table" id="dashboard-user-table"></table>
+                </div>
+            </section>
+
+            <section class="panel panel--wide">
+                <h2>HISTÓRICO DE ALTERAÇÕES</h2>
+                <div class="table-wrap">
+                    <table class="data-table" id="dashboard-audit-table"></table>
+                </div>
+            </section>
+        </section>
     </main>
 
-    <!-- Modal: Detalhes do Setor -->
-    <div class="modal" id="modal-setor">
+    <div class="modal hidden" id="entity-modal" role="dialog" aria-modal="true" aria-labelledby="entity-modal-title">
         <div class="modal__overlay" data-close-modal></div>
-        <div class="modal__content modal__content--flex">
-            <div class="modal__header--sticky">
-                <button class="modal__close" data-close-modal aria-label="Fechar">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        stroke-linecap="round" stroke-linejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-                <h2 class="modal__title" id="setor-nome">Nome do Setor</h2>
-                <p class="modal__info" id="setor-horario">Horário</p>
-            </div>
-            <div class="modal__body">
-                <div class="modal__section modal__section-card">
-                    <h3 class="modal__section-title">Responsáveis</h3>
-                    <ul class="lista-responsaveis" id="setor-responsaveis"></ul>
-                </div>
-                <div class="modal__section modal__section-card">
-                    <h3 class="modal__section-title">Enfermos</h3>
-                    <ul class="lista-enfermos" id="setor-enfermos"></ul>
-
-                    <div class="modal__actions--center">
-                        <button id="btn-add-enfermo" class="btn btn--success">+ ADICIONAR ENFERMO</button>
-                    </div>
-                </div>
-
-                <div class="modal__section modal__section-card hidden" id="setor-pendencias-container">
-                    <h3 class="modal__section-title">Pendências no Setor</h3>
-                    <ul class="lista-pendencias" id="setor-pendencias-lista"></ul>
-                </div>
-
-            </div>
+        <div class="modal__panel">
+            <button class="modal__close" type="button" data-close-modal aria-label="FECHAR">×</button>
+            <h2 id="entity-modal-title">CADASTRO</h2>
+            <form class="form" id="entity-form"></form>
         </div>
     </div>
 
-    <!-- Modal: Login Responsável -->
-    <div class="modal" id="modal-login">
-        <div class="modal__overlay" data-close-modal></div>
-        <div class="modal__content modal__content--small">
-            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
-            <h2 class="modal__title">Identificação</h2>
-            <p class="modal__subtitle">Para editar ou remover enfermos</p>
-            <form id="form-login" class="form">
-                <div class="form__group">
-                    <label for="login-nome" class="form__label">Seu nome</label>
-                    <input type="text" id="login-nome" class="form__input input-uppercase"
-                        placeholder="EX: MARIA A. SANTOS" required>
-                </div>
-                <div class="form__group">
-                    <label for="login-telefone" class="form__label">Seu celular</label>
-                    <input type="tel" id="login-telefone" class="form__input input-phone" placeholder="12 99999-9999"
-                        maxlength="15" required>
-                </div>
-                <p id="login-erro" class="form__error hidden">Nome ou telefone incorretos</p>
-                <button type="submit" class="btn btn--success btn--full">Confirmar</button>
-            </form>
-        </div>
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+        <span class="toast__accent" aria-hidden="true"></span>
+        <span class="toast__message" id="toast-message"></span>
+        <button class="toast__close" id="toast-close" type="button" aria-label="FECHAR NOTIFICAÇÃO">×</button>
     </div>
 
-    <!-- Modal: Login Admin -->
-    <div class="modal" id="modal-login-admin">
-        <div class="modal__overlay" data-close-modal></div>
-        <div class="modal__content modal__content--small">
-            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
-            <h2 class="modal__title">Administração</h2>
-            <p class="modal__subtitle">Escolha como deseja entrar</p>
-
-            <button id="btn-google-login" class="btn btn--google btn--full">
-                <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path
-                        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"
-                        fill="#4285F4" />
-                    <path
-                        d="M9.003 18c2.43 0 4.467-.806 5.956-2.18L12.05 13.56c-.806.54-1.836.86-3.047.86-2.344 0-4.328-1.584-5.036-3.711H.96v2.332C2.44 15.983 5.485 18 9.003 18z"
-                        fill="#34A853" />
-                    <path
-                        d="M3.964 10.712c-.18-.54-.282-1.117-.282-1.71 0-.593.102-1.17.282-1.71V4.96H.957C.347 6.175 0 7.55 0 9.002c0 1.452.348 2.827.957 4.042l3.007-2.332z"
-                        fill="#FBBC05" />
-                    <path
-                        d="M9.003 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.464.891 11.426 0 9.003 0 5.485 0 2.44 2.017.96 4.958L3.967 7.29c.708-2.127 2.692-3.71 5.036-3.71z"
-                        fill="#EA4335" />
-                </svg>
-                Entrar com Google
-            </button>
-
-            <div class="divider">
-                <span>ou</span>
-            </div>
-
-            <form id="form-login-admin" class="form">
-                <div class="form__group">
-                    <label for="admin-email" class="form__label">Email</label>
-                    <input type="email" id="admin-email" class="form__input" placeholder="admin@exemplo.com" required>
-                </div>
-                <div class="form__group">
-                    <label for="admin-senha" class="form__label">Senha</label>
-                    <input type="password" id="admin-senha" class="form__input" required>
-                </div>
-                <p id="admin-erro" class="form__error hidden">Email ou senha incorretos</p>
-                <button type="submit" class="btn btn--success btn--full">Entrar com Email</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal: Editar Enfermo -->
-    <div class="modal" id="modal-editar">
-        <div class="modal__overlay" data-close-to-setor></div>
-        <div class="modal__content modal__content--small">
-            <button class="modal__close" data-close-to-setor aria-label="Fechar">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-            <h2 class="modal__title">Editar Enfermo</h2>
-            <form id="form-editar" class="form">
-                <input type="hidden" id="editar-id">
-                <input type="hidden" id="editar-setor-id">
-                <div class="form__group">
-                    <label for="editar-nome" class="form__label">Nome</label>
-                    <input type="text" id="editar-nome" class="form__input input-uppercase" required>
-                </div>
-                <div class="form__group">
-                    <label for="editar-endereco" class="form__label">Endereço</label>
-                    <input type="text" id="editar-endereco" class="form__input input-uppercase" required>
-                </div>
-                <div class="form__group">
-                    <label for="editar-idade" class="form__label">Idade</label>
-                    <input type="number" id="editar-idade" class="form__input" required>
-                </div>
-                <div class="form__group">
-                    <label for="editar-telefone" class="form__label">Telefone</label>
-                    <input type="tel" id="editar-telefone" class="form__input input-phone" placeholder="12 99999-9999"
-                        maxlength="15" required>
-                </div>
-                <button type="submit" class="btn btn--primary btn--full">Solicitar Alteração</button>
-
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal: Remover Enfermo -->
-    <div class="modal" id="modal-remover">
-        <div class="modal__overlay" data-close-to-setor></div>
-        <div class="modal__content modal__content--small">
-            <button class="modal__close" data-close-to-setor aria-label="Fechar">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-            <h2 class="modal__title">Remover Enfermo</h2>
-            <p class="modal__text" id="remover-nome-enfermo">Nome do enfermo</p>
-            <form id="form-remover" class="form">
-                <input type="hidden" id="remover-id">
-                <input type="hidden" id="remover-setor-id">
-                <div class="form__group">
-                    <label for="remover-motivo" class="form__label">Motivo da remoção</label>
-                    <select id="remover-motivo" class="form__select" required>
-                        <option value="">Selecione...</option>
-                        <option value="Falecimento">Falecimento</option>
-                        <option value="Desistência">Desistência</option>
-                        <option value="Mudança">Mudança de endereço/cidade</option>
-                        <option value="Outro">Outro motivo</option>
-                    </select>
-                </div>
-                <div class="form__group hidden" id="remover-outro-container">
-                    <label for="remover-outro-motivo" class="form__label">Especifique o motivo</label>
-                    <input type="text" id="remover-outro-motivo" class="form__input input-uppercase"
-                        placeholder="Digite o motivo (mínimo 4 caracteres)">
-                </div>
-                <p id="remover-erro" class="form__error hidden">Motivo deve ter pelo menos 4 caracteres</p>
-                <button type="submit" class="btn btn--danger btn--full">Solicitar Remoção</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal: Adicionar Enfermo -->
-    <div class="modal" id="modal-adicionar">
-        <div class="modal__overlay" data-close-modal></div>
-        <div class="modal__content modal__content--small">
-            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
-            <h2 class="modal__title">Novo Enfermo</h2>
-            <form id="form-adicionar" class="form">
-                <input type="hidden" id="adicionar-setor-id">
-                <div class="form__group">
-                    <label for="adicionar-nome" class="form__label">Nome</label>
-                    <input type="text" id="adicionar-nome" class="form__input input-uppercase" required>
-                </div>
-                <div class="form__group">
-                    <label for="adicionar-endereco" class="form__label">Endereço</label>
-                    <input type="text" id="adicionar-endereco" class="form__input input-uppercase" required>
-                </div>
-                <div class="form__group">
-                    <label for="adicionar-idade" class="form__label">Idade</label>
-                    <input type="number" id="adicionar-idade" class="form__input" required>
-                </div>
-                <div class="form__group">
-                    <label for="adicionar-telefone" class="form__label">Telefone</label>
-                    <input type="tel" id="adicionar-telefone" class="form__input input-phone"
-                        placeholder="12 99999-9999" maxlength="15" required>
-                </div>
-                <button type="submit" class="btn btn--success btn--full">Adicionar</button>
-
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal: Novo Setor (Admin) -->
-    <div class="modal" id="modal-novo-setor">
-        <div class="modal__overlay" data-close-modal></div>
-        <div class="modal__content modal__content--small">
-            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
-            <h2 class="modal__title">Novo Setor</h2>
-            <form id="form-novo-setor" class="form">
-                <div class="form__group">
-                    <label for="novo-setor-numero" class="form__label">Número do Setor (0-100)</label>
-                    <input type="number" id="novo-setor-numero" class="form__input" placeholder="EX: 5" min="0"
-                        max="100" required>
-                </div>
-                <div class="form__group">
-                    <label for="novo-setor-dia" class="form__label">Dia da Semana</label>
-                    <select id="novo-setor-dia" class="form__select" required>
-                        <option value="">Selecione...</option>
-                        <option value="SEGUNDA-FEIRA">SEGUNDA-FEIRA</option>
-                        <option value="TERÇA-FEIRA">TERÇA-FEIRA</option>
-                        <option value="QUARTA-FEIRA">QUARTA-FEIRA</option>
-                        <option value="QUINTA-FEIRA">QUINTA-FEIRA</option>
-                        <option value="SEXTA-FEIRA">SEXTA-FEIRA</option>
-                        <option value="SÁBADO">SÁBADO</option>
-                        <option value="DOMINGO">DOMINGO</option>
-                    </select>
-                </div>
-                <div class="form__group">
-                    <label for="novo-setor-horario-fim" class="form__label">Horário das Visitas</label>
-                    <input type="time" id="novo-setor-horario-fim" class="form__input" required>
-                </div>
-                <p class="form__info-text">Responsáveis e enfermos podem ser adicionados após a criação do setor.</p>
-                <button type="submit" class="btn btn--success btn--full">Criar Setor</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal: Pendências (Admin) -->
-    <div class="modal" id="modal-pendencias">
-        <div class="modal__overlay" data-close-modal></div>
-        <div class="modal__content">
-            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
-            <h2 class="modal__title">Pendências</h2>
-            <p class="modal__subtitle">Solicitações aguardando aprovação</p>
-            <ul class="lista-pendencias" id="lista-pendencias">
-                <li class="pendencia--vazia">Nenhuma pendência no momento</li>
-            </ul>
-        </div>
-    </div>
-
-    <!-- Modal: Gerenciar Administradores -->
-    <div class="modal" id="modal-gerenciar-admins">
-        <div class="modal__overlay" data-close-modal></div>
-        <div class="modal__content">
-            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
-            <h2 class="modal__title">Gerenciar Administradores</h2>
-            <p class="modal__subtitle">Adicionar ou remover administradores</p>
-
-            <!-- Formulário para adicionar admin -->
-            <form id="form-add-admin" class="form"
-                style="margin-bottom: var(--spacing-lg); padding-bottom: var(--spacing-lg); border-bottom: 1px solid var(--color-border);">
-                <h3 class="modal__section-title">Adicionar Novo Administrador</h3>
-                <div class="form__group">
-                    <label for="novo-admin-nome" class="form__label">Nome Completo</label>
-                    <input type="text" id="novo-admin-nome" class="form__input input-uppercase"
-                        placeholder="SEU NOME COMPLETO" required>
-                </div>
-                <div class="form__group">
-                    <label for="novo-admin-email" class="form__label">Email</label>
-                    <input type="email" id="novo-admin-email" class="form__input" placeholder="admin@exemplo.com"
-                        required>
-                </div>
-                <div class="form__group">
-                    <label for="novo-admin-senha" class="form__label">Senha</label>
-                    <input type="password" id="novo-admin-senha" class="form__input" minlength="6" required>
-                </div>
-                <p id="add-admin-erro" class="form__error hidden">Erro ao adicionar</p>
-                <button type="submit" class="btn btn--success btn--full">+ Adicionar Administrador</button>
-            </form>
-
-            <!-- Lista de admins -->
-            <div class="modal__section">
-                <h3 class="modal__section-title">Administradores Cadastrados</h3>
-                <ul class="lista-admins" id="lista-admins">
-                    <li class="loading">Carregando...</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-
-    <!-- Modal: Responsável (Adicionar/Editar) -->
-    <div class="modal" id="modal-responsavel">
-        <div class="modal__overlay" data-close-modal></div>
-        <div class="modal__content modal__content--small">
-            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
-            <h2 class="modal__title" id="modal-responsavel-titulo">Adicionar Responsável</h2>
-            <form id="form-responsavel" class="form">
-                <input type="hidden" id="responsavel-nome-antigo">
-                <input type="hidden" id="responsavel-telefone-antigo">
-                <div class="form__group">
-                    <label for="responsavel-nome" class="form__label">Nome do Responsável</label>
-                    <input type="text" id="responsavel-nome" class="form__input input-uppercase"
-                        placeholder="EX: MARIA APARECIDA SANTOS" required>
-                </div>
-                <div class="form__group">
-                    <label for="responsavel-telefone" class="form__label">Celular</label>
-                    <input type="tel" id="responsavel-telefone" class="form__input input-phone"
-                        placeholder="12 99999-9999" maxlength="15" required>
-                </div>
-                <p id="responsavel-erro" class="form__error hidden">Erro</p>
-                <button type="submit" class="btn btn--success btn--full" id="btn-salvar-responsavel">Adicionar</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal: Remover Responsável -->
-    <div class="modal" id="modal-remover-responsavel">
-        <div class="modal__overlay" data-close-modal></div>
-        <div class="modal__content modal__content--small">
-            <button class="modal__close" data-close-modal aria-label="Fechar">&times;</button>
-            <h2 class="modal__title">Remover Responsável</h2>
-            <p class="modal__text" id="remover-responsavel-texto">Deseja remover este responsável?</p>
-            <form id="form-remover-responsavel" class="form">
-                <input type="hidden" id="remover-responsavel-nome">
-                <input type="hidden" id="remover-responsavel-telefone">
-                <div class="form__actions">
-                    <button type="button" class="btn btn--outline btn--full" data-close-modal>Cancelar</button>
-                    <button type="submit" class="btn btn--danger btn--full">Remover</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Toast Notification -->
-    <div class="toast hidden" id="toast">
-        <span id="toast-message"></span>
-        <button class="toast__close" id="btn-close-toast" aria-label="Fechar">&times;</button>
-    </div>
-
-    <!-- Scripts -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
