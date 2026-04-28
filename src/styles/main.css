@@ -70,11 +70,11 @@ textarea:focus-visible {
     position: sticky;
     top: 0;
     z-index: 20;
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
     gap: 12px;
-    padding: 12px 14px;
+    padding: 12px 14px 10px;
     background: linear-gradient(135deg, #ffffff 0%, #f1f7f3 100%);
     border-bottom: 2px solid var(--border);
     box-shadow: 0 8px 18px rgba(25, 48, 42, 0.08);
@@ -96,7 +96,7 @@ textarea:focus-visible {
 
 .topbar__brand-copy {
     display: grid;
-    gap: 2px;
+    gap: 0;
     min-width: 0;
 }
 
@@ -105,14 +105,13 @@ textarea:focus-visible {
     font-weight: 800;
 }
 
-.topbar__brand span {
-    max-width: 52vw;
-    overflow: hidden;
+.topbar__user {
+    grid-column: 1 / -1;
     color: var(--muted);
-    font-size: 0.72rem;
+    font-size: 0.78rem;
     font-weight: 700;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    line-height: 1.15;
+    word-break: break-word;
 }
 
 .topbar__actions {
@@ -285,6 +284,44 @@ textarea:focus-visible {
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
+}
+
+.screen--setor {
+    position: relative;
+}
+
+.setor-hero {
+    position: relative;
+    overflow: hidden;
+    padding: 20px 16px 34px;
+    margin-bottom: 16px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    isolation: isolate;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.26) 62%, rgba(255, 255, 255, 0.72) 100%);
+}
+
+.setor-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--setor-banner-image);
+    background-position: center;
+    background-size: cover;
+    opacity: 0.44;
+    z-index: -2;
+}
+
+.setor-hero::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.04) 58%, rgba(255, 255, 255, 0.16) 76%, rgba(255, 255, 255, 0.58) 90%, rgba(255, 255, 255, 0.9) 100%);
+    z-index: -1;
+}
+
+.setor-hero .eyebrow {
+    margin-top: 0;
 }
 
 .screen__header--row .secondary-action {
@@ -666,11 +703,12 @@ textarea:focus-visible {
     }
 
     .topbar {
+        gap: 10px;
         padding: 10px;
     }
 
-    .topbar__brand span {
-        max-width: 42vw;
+    .topbar__user {
+        font-size: 0.73rem;
     }
 
     .topbar__logo {
@@ -694,6 +732,10 @@ textarea:focus-visible {
     .screen__header--row {
         align-items: stretch;
         flex-direction: column;
+    }
+
+    .setor-hero {
+        padding: 18px 14px 28px;
     }
 
     .screen__header--row .secondary-action {

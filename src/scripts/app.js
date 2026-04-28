@@ -191,6 +191,7 @@ const App = {
         const localidade = DB.getLocalidades().find(item => item.id === setor.localidadeId);
         const user = Auth.getUsuario();
         this.currentSetorId = setorId;
+        document.getElementById('setor-hero').style.setProperty('--setor-banner-image', `url("${localidade.imagem}")`);
 
         document.getElementById('setor-localidade').textContent = localidade.nome;
         document.getElementById('setor-title').textContent = setor.nome;

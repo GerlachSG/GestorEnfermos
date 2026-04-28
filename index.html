@@ -19,7 +19,6 @@
             <img class="topbar__logo" src="src/img/Pastoral-da-Saude-FavIcon.png" alt="PASTORAL DA SAÚDE">
             <div class="topbar__brand-copy">
                 <strong>VISITA AMIGA</strong>
-                <span id="current-user-label">ACESSO NÃO IDENTIFICADO</span>
             </div>
         </div>
         <div class="topbar__actions">
@@ -33,6 +32,7 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17 15 12 10 7"></path><path d="M15 12H3"></path><path d="M13 4h5a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-5"></path></svg>
             </button>
         </div>
+        <span class="topbar__user" id="current-user-label">ACESSO NÃO IDENTIFICADO</span>
     </header>
 
     <main class="app" id="app">
@@ -84,8 +84,8 @@
             <div class="sector-grid" id="matriz-setores-grid"></div>
         </section>
 
-        <section class="screen hidden" id="view-setor" aria-labelledby="setor-title">
-            <div class="screen__header screen__header--row">
+        <section class="screen screen--setor hidden" id="view-setor" aria-labelledby="setor-title">
+            <div class="screen__header screen__header--row setor-hero" id="setor-hero">
                 <div>
                     <p class="eyebrow" id="setor-localidade">LOCALIDADE</p>
                     <h1 id="setor-title">SETOR</h1>
