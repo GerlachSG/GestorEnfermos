@@ -17,6 +17,8 @@ O **Gestor de Enfermos** é uma aplicação web mobile-first criada para resolve
 - **Transparência e Mapeamento:** Qualquer pessoa da equipe pode, com um clique, saber quantos enfermos estão ativos em cada setor/lugar.
 - **Histórico e Responsáveis:** Registro claro de quem atende qual assistido e de quem já parou de ser atendido.
 - **Agilidade para o Grupo:** Facilita a comunicação da equipe em meio ao grande fluxo semanal de entradas e saídas de enfermos.
+- **Organização por Localidades:** A navegação foi pensada para mostrar de forma simples a Matriz São Bento e as capelas atendidas pela pastoral.
+- **Visual Claro e Acolhedor:** A identidade do sistema foi renovada com uma interface em verde escuro e branco, com leitura limpa e botões de fácil compreensão.
 
 Esta solução nasceu de uma dor real no dia a dia da **Paróquia São Bento**, desenhada para ser inclusiva e facilmente escalada para qualquer comunidade que deseje organizar melhor seus setores e voluntários.
 
@@ -26,8 +28,9 @@ A interface foi projetada com **máxima acessibilidade**, pensando especialmente
 
 - ✅ Textos em **CAIXA ALTA** para leitura sem esforço.
 - ✅ Botões grandes e áreas de clique generosas.
-- ✅ Cores suaves e balanceadas para evitar fadiga visual.
+- ✅ Paleta em **verde escuro e branco**, com contraste equilibrado e aparência simples.
 - ✅ Navegação linear e direta, sem menus complexos.
+- ✅ Topbar fixa com identificação clara do usuário e acesso rápido às principais áreas.
 
 ---
 
@@ -38,9 +41,16 @@ O sistema funciona em qualquer celular ou computador sem necessidade de instala�
 👉 **[CLIQUE AQUI PARA ENTRAR NO SISTEMA](https://gerlachsg.github.io/GestorEnfermos/)**
 
 ### Níveis de Acesso:
-- **Visitante**: Visualiza os setores e horários.
-- **Responsáveis**: Identificam-se para solicitar inclusões, edições ou exclusões de enfermos.
-- **Administradores**: Gerenciam a equipe de voluntários e aprovam as solicitações pendentes.
+- **Coordenador**: Acompanha informações gerais, administra usuários, consulta relatórios e visualiza o painel completo da pastoral.
+- **Responsáveis**: Entram com nome e telefone para acompanhar seu setor e manter as informações dos enfermos em dia.
+- **Agentes**: Consultam os setores e a distribuição do atendimento de forma simples e organizada.
+
+### Como a experiência funciona hoje:
+- **Login obrigatório** com identificação por nome e telefone.
+- **Quatro localidades principais** já organizadas na tela inicial, incluindo a Matriz São Bento e as capelas atendidas.
+- **Setores internos da Matriz** apresentados separadamente para facilitar a navegação.
+- **Página de setor** com responsáveis, agentes e lista de enfermos em uma visualização direta.
+- **Cabeçalho fixo** com identidade visual da pastoral e nome completo do usuário logado.
 
 ---
 
@@ -48,16 +58,17 @@ O sistema funciona em qualquer celular ou computador sem necessidade de instala�
 
 Este sistema serve à comunidade da **Paróquia São Bento** (São José dos Campos - SP), onde a Pastoral da Saúde realiza o trabalho essencial de levar conforto espiritual e presença fraterna a quem mais precisa.
 
-🔗 **Conheça nossa Paróquia:** [diocese-sjc.org.br/paroquia-sao-bento](https://diocese-sjc.org.br/local/paroquia-sao-bento/)
+🔗 **Conheça nossa Paróquia Matriz:** [diocese-sjc.org.br/paroquia-sao-bento](https://diocese-sjc.org.br/local/paroquia-sao-bento/)
 
 ---
 
 ## 💡 FUNCIONALIDADES & SEGURANÇA
 
-- 📍 **Mapa de Setores**: Horários e locais de visita sempre atualizados.
-- 👥 **Gestão Voluntária**: Transparência sobre quem são os responsáveis de cada área.
-- 🛡️ **Privacidade**: Dados de contato dos voluntários visíveis apenas para a coordenação (Admins).
-- ✏️ **Sistema de Auditória**: Alterações só entram no banco após validação administrativa.
+- 📍 **Localidades e Setores**: Visualização rápida das áreas acompanhadas pela pastoral.
+- 👥 **Gestão de Equipe**: Clareza sobre responsáveis, agentes e distribuição do atendimento.
+- 🩺 **Cadastro de Enfermos**: Informações organizadas de forma prática para consulta e atualização.
+- 📊 **Painel do Coordenador**: Área com indicadores, quantidades por setor, usuários cadastrados e histórico recente de alterações.
+- 🛡️ **Privacidade e Organização**: Cada perfil acessa apenas o que faz sentido para sua função dentro da pastoral.
 
 ---
 
