@@ -23,7 +23,7 @@ const App = {
         document.getElementById('btn-learn-more').addEventListener('click', () => this.openAboutModal());
         document.getElementById('form-login').addEventListener('submit', event => this.handleLogin(event));
         document.getElementById('login-nome').addEventListener('input', event => {
-            event.target.value = DB.normalizeText(event.target.value);
+            event.target.value = DB.normalizeTypedText(event.target.value);
             this.resetCoordinatorStep();
             this.updateNameSuggestions(event.target.value);
         });
@@ -467,7 +467,7 @@ const App = {
         };
         form.querySelectorAll('input[type="text"], input:not([type]), textarea').forEach(input => {
             input.addEventListener('input', event => {
-                event.target.value = DB.normalizeText(event.target.value);
+                event.target.value = DB.normalizeTypedText(event.target.value);
             });
         });
         form.querySelectorAll('input[name="telefone"]').forEach(input => {

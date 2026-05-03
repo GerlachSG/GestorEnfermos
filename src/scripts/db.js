@@ -367,6 +367,10 @@ const DB = {
         return String(value || '').trim().replace(/\s+/g, ' ').toUpperCase();
     },
 
+    normalizeTypedText(value) {
+        return String(value || '').replace(/\s+/g, ' ').toUpperCase();
+    },
+
     onlyDigits(value) {
         return String(value || '').replace(/\D/g, '');
     },

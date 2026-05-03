@@ -19,6 +19,7 @@
     --shadow: 0 12px 28px rgba(25, 48, 42, 0.14);
     --radius: 8px;
     --tap: 56px;
+    --page-pad: 14px;
     --font: 'Inter', Arial, Helvetica, sans-serif;
 }
 
@@ -33,6 +34,12 @@ html {
     -webkit-text-size-adjust: 100%;
 }
 
+html,
+body {
+    width: 100%;
+    overflow-x: hidden;
+}
+
 body {
     min-height: 100vh;
     background: var(--bg);
@@ -40,6 +47,26 @@ body {
     font-family: var(--font);
     line-height: 1.45;
     text-transform: uppercase;
+}
+
+img,
+svg {
+    max-width: 100%;
+}
+
+strong,
+h1,
+h2,
+p,
+li,
+span,
+td,
+th,
+button,
+input,
+select,
+textarea {
+    overflow-wrap: anywhere;
 }
 
 button,
@@ -73,8 +100,8 @@ textarea:focus-visible {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 12px;
-    padding: 12px 14px 10px;
+    gap: 10px 12px;
+    padding: 12px var(--page-pad) 10px;
     background: linear-gradient(135deg, #ffffff 0%, #f1f7f3 100%);
     border-bottom: 2px solid var(--border);
     box-shadow: 0 8px 18px rgba(25, 48, 42, 0.08);
@@ -88,8 +115,9 @@ textarea:focus-visible {
 }
 
 .topbar__logo {
-    width: 42px;
-    height: 42px;
+    width: clamp(34px, 9vw, 42px);
+    height: auto;
+    aspect-ratio: 1;
     flex: 0 0 auto;
     object-fit: contain;
 }
@@ -116,12 +144,17 @@ textarea:focus-visible {
 
 .topbar__actions {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
     gap: 8px;
+    min-width: 0;
 }
 
 .icon-btn {
     width: var(--tap);
     height: var(--tap);
+    min-width: 44px;
+    min-height: 44px;
     border: 2px solid var(--border);
     border-radius: var(--radius);
     background: linear-gradient(180deg, #ffffff 0%, var(--primary-soft) 100%);
@@ -145,7 +178,7 @@ textarea:focus-visible {
 }
 
 .home-screen {
-    min-height: 100vh;
+    min-height: 100svh;
     display: grid;
     place-items: center;
     padding: 24px 18px;
@@ -154,7 +187,7 @@ textarea:focus-visible {
 
 .home-panel {
     width: min(100%, 390px);
-    min-height: min(760px, calc(100vh - 48px));
+    min-height: min(760px, calc(100svh - 48px));
     display: grid;
     align-content: center;
     gap: 28px;
@@ -168,8 +201,9 @@ textarea:focus-visible {
 }
 
 .home-brand__logo {
-    width: 76px;
-    height: 76px;
+    width: clamp(62px, 18vw, 76px);
+    height: auto;
+    aspect-ratio: 1;
     object-fit: contain;
 }
 
@@ -204,7 +238,7 @@ textarea:focus-visible {
 
 .home-action {
     width: 100%;
-    min-height: 64px;
+    min-height: clamp(54px, 15vw, 64px);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -235,7 +269,7 @@ textarea:focus-visible {
 }
 
 .login-screen {
-    min-height: calc(100vh - 80px);
+    min-height: calc(100svh - 80px);
     display: grid;
     place-items: center;
     padding: 18px;
@@ -245,6 +279,7 @@ textarea:focus-visible {
 .login-panel {
     width: min(100%, 440px);
     padding: 24px 18px;
+    min-width: 0;
     border: 1px solid #ffffff;
     border-radius: var(--radius);
     background: #ffffff;
@@ -253,8 +288,9 @@ textarea:focus-visible {
 
 .login-panel__logo {
     display: block;
-    width: 120px;
-    height: 120px;
+    width: min(120px, 34vw);
+    height: auto;
+    aspect-ratio: 1;
     margin: 0 auto 20px;
     padding: 0;
     object-fit: contain;
@@ -307,6 +343,7 @@ textarea:focus-visible {
     color: var(--text);
     font-size: 1rem;
     font-weight: 700;
+    min-width: 0;
 }
 
 .field textarea {
@@ -318,6 +355,7 @@ textarea:focus-visible {
 .secondary-action,
 .danger-action {
     min-height: var(--tap);
+    max-width: 100%;
     padding: 12px 18px;
     border-radius: var(--radius);
     font-weight: 800;
@@ -362,7 +400,8 @@ textarea:focus-visible {
 .screen {
     width: min(100%, 1120px);
     margin: 0 auto;
-    padding: 18px 14px 48px;
+    padding: 18px var(--page-pad) 48px;
+    min-width: 0;
 }
 
 .screen__header {
@@ -374,6 +413,11 @@ textarea:focus-visible {
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
+    min-width: 0;
+}
+
+.screen__header--row > div {
+    min-width: 0;
 }
 
 .screen--setor {
@@ -386,7 +430,7 @@ textarea:focus-visible {
     padding: 20px 16px 34px;
     margin-bottom: 16px;
     border: 1px solid var(--border);
-    border-radius: 18px;
+    border-radius: var(--radius);
     isolation: isolate;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.26) 62%, rgba(255, 255, 255, 0.72) 100%);
 }
@@ -427,14 +471,14 @@ textarea:focus-visible {
 }
 
 .location-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
     gap: 12px;
 }
 
 .location-card {
-    min-height: 218px;
+    min-height: 0;
     display: grid;
-    grid-template-rows: 108px 1fr;
+    grid-template-rows: minmax(92px, 38vw) 1fr;
     overflow: hidden;
     border: 1px solid var(--border);
     border-radius: var(--radius);
@@ -465,7 +509,7 @@ textarea:focus-visible {
 .location-card__fallback {
     display: none;
     margin: -12px -12px 10px;
-    min-height: 108px;
+    min-height: min(108px, 38vw);
     place-items: center;
     background: var(--surface-3);
     color: var(--muted);
@@ -494,11 +538,11 @@ textarea:focus-visible {
 }
 
 .sector-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
 }
 
 .sector-card {
-    min-height: 132px;
+    min-height: clamp(96px, 28vw, 132px);
     display: grid;
     place-items: center;
     padding: 18px 10px;
@@ -531,6 +575,7 @@ textarea:focus-visible {
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: #ffffff;
+    min-width: 0;
 }
 
 .panel--wide {
@@ -554,6 +599,7 @@ textarea:focus-visible {
     border-radius: var(--radius);
     background: var(--surface-2);
     font-weight: 800;
+    min-width: 0;
 }
 
 .people-list__meta {
@@ -564,7 +610,7 @@ textarea:focus-visible {
 
 .row-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr));
     gap: 10px;
 }
 
@@ -596,7 +642,8 @@ textarea:focus-visible {
 .table-wrap {
     width: 100%;
     margin-top: 14px;
-    overflow-x: visible;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .data-table {
@@ -657,7 +704,7 @@ textarea:focus-visible {
     z-index: 50;
     display: grid;
     place-items: end center;
-    padding: 10px;
+    padding: min(10px, 3vw);
 }
 
 .modal__overlay {
@@ -669,7 +716,7 @@ textarea:focus-visible {
 .modal__panel {
     position: relative;
     width: min(100%, 560px);
-    max-height: 92vh;
+    max-height: 92svh;
     overflow: auto;
     padding: 22px 16px;
     border: 2px solid #000000;
@@ -682,8 +729,8 @@ textarea:focus-visible {
     position: absolute;
     top: 10px;
     right: 10px;
-    width: 48px;
-    height: 48px;
+    width: clamp(42px, 12vw, 48px);
+    height: clamp(42px, 12vw, 48px);
     border: 2px solid var(--border-strong);
     border-radius: var(--radius);
     background: #ffffff;
@@ -730,7 +777,7 @@ textarea:focus-visible {
     width: min(calc(100vw - 24px), 360px);
     padding: 10px 12px;
     border: 1px solid var(--border);
-    border-radius: 14px;
+    border-radius: var(--radius);
     background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(8px);
     color: var(--text);
@@ -788,13 +835,17 @@ textarea:focus-visible {
 }
 
 @media (max-width: 679px) {
+    :root {
+        --page-pad: 10px;
+        --tap: 48px;
+    }
+
     html {
         font-size: 16px;
     }
 
     .topbar {
         gap: 10px;
-        padding: 10px;
     }
 
     .topbar__user {
@@ -802,13 +853,12 @@ textarea:focus-visible {
     }
 
     .topbar__logo {
-        width: 36px;
-        height: 36px;
+        width: clamp(32px, 10vw, 36px);
     }
 
     .icon-btn {
-        width: 48px;
-        height: 48px;
+        width: var(--tap);
+        height: var(--tap);
     }
 
     .screen {
@@ -841,13 +891,12 @@ textarea:focus-visible {
     }
 
     .home-panel {
-        min-height: calc(100vh - 36px);
+        min-height: calc(100svh - 36px);
         gap: 24px;
     }
 
     .home-brand__logo {
-        width: 68px;
-        height: 68px;
+        width: clamp(58px, 18vw, 68px);
     }
 
     .home-brand h1 {
@@ -856,6 +905,15 @@ textarea:focus-visible {
 
     .home-illustration {
         width: min(100%, 318px);
+    }
+
+    .location-grid,
+    .sector-grid {
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 132px), 1fr));
+    }
+
+    .location-card {
+        grid-template-rows: minmax(84px, 34vw) 1fr;
     }
 
     .location-card h2 {
@@ -917,7 +975,7 @@ textarea:focus-visible {
 
     .data-table td {
         display: grid;
-        grid-template-columns: minmax(96px, 38%) 1fr;
+        grid-template-columns: minmax(88px, 36%) minmax(0, 1fr);
         gap: 10px;
         align-items: start;
         border: 0;
@@ -948,19 +1006,63 @@ textarea:focus-visible {
     }
 }
 
+@media (max-width: 420px) {
+    :root {
+        --page-pad: 8px;
+        --tap: 44px;
+    }
+
+    .topbar {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .topbar__brand {
+        justify-content: center;
+    }
+
+    .topbar__actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(44px, 1fr));
+        justify-content: stretch;
+    }
+
+    .icon-btn {
+        width: 100%;
+    }
+
+    .topbar__user {
+        text-align: center;
+    }
+
+    .home-brand {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .row-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .data-table td {
+        grid-template-columns: 1fr;
+        gap: 4px;
+    }
+}
+
 @media (min-width: 680px) {
     .screen {
         padding: 28px 22px 64px;
     }
 
     .location-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
         gap: 14px;
     }
 
     .location-card {
-        min-height: 310px;
-        grid-template-rows: 174px 1fr;
+        min-height: clamp(250px, 34vw, 310px);
+        grid-template-rows: clamp(136px, 20vw, 174px) 1fr;
     }
 
     .location-card__body {
@@ -978,11 +1080,11 @@ textarea:focus-visible {
     .detail-layout,
     .metric-grid,
     .filters {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     }
 
     .section-actions {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     }
 
     .modal {
@@ -992,15 +1094,15 @@ textarea:focus-visible {
 
 @media (min-width: 980px) {
     .location-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
     }
 
     .location-card {
-        min-height: 360px;
+        min-height: clamp(310px, 30vw, 360px);
     }
 
     .sector-grid,
     .metric-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
     }
 }
